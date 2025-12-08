@@ -223,7 +223,7 @@ class ServerMonitorGUI:
         :param is_online: Whether server is reachable.
         :type is_online: bool
         """
-        status_text = "Server: Online ✅" if is_online else "Server: Offline ❌"
+        status_text = "Server: Online" if is_online else "Server: Offline"
         color = "green" if is_online else "red"
         self.status_label.config(text=status_text, foreground=color)
         self.root.title(f"Server Monitor & API Documentation — {status_text}")
