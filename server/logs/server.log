@@ -825,3 +825,41 @@
 2025-12-10 18:37:31,942 [INFO] app: Registered route: POST /api/users → users_create
 2025-12-10 18:37:31,958 [WARNING] werkzeug:  * Debugger is active!
 2025-12-10 18:37:31,962 [INFO] werkzeug:  * Debugger PIN: 108-000-919
+2025-12-10 18:37:39,198 [INFO] app: Registered route: POST /api/telegram/auth → telegram_auth
+2025-12-10 18:37:39,199 [INFO] app: Registered route: POST /api/telegram/notify → telegram_notify
+2025-12-10 18:37:39,201 [INFO] app: Registered route: GET /api/tasks → tasks_list
+2025-12-10 18:37:39,202 [INFO] app: Registered route: POST /api/tasks → tasks_create
+2025-12-10 18:37:39,204 [INFO] app: Registered route: PUT /api/tasks/<int:id> → tasks_update
+2025-12-10 18:37:39,205 [INFO] app: Registered route: DELETE /api/tasks/<int:id> → tasks_delete
+2025-12-10 18:37:39,206 [INFO] app: Registered route: GET /api/docs → docs_list
+2025-12-10 18:37:39,207 [INFO] app: Registered route: POST /api/docs → docs_create
+2025-12-10 18:37:39,208 [INFO] app: Registered route: PUT /api/docs/<int:id> → docs_update
+2025-12-10 18:37:39,209 [INFO] app: Registered route: GET /api/calendar/events → events_list
+2025-12-10 18:37:39,210 [INFO] app: Registered route: POST /api/calendar/events → events_create
+2025-12-10 18:37:39,211 [INFO] app: Registered route: GET /api/users → users_list
+2025-12-10 18:37:39,212 [INFO] app: Registered route: POST /api/users → users_create
+2025-12-10 18:37:39,239 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.139:5000
+2025-12-10 18:37:39,239 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2025-12-10 18:37:39,240 [INFO] werkzeug:  * Restarting with stat
+2025-12-10 18:37:39,621 [INFO] app: Registered route: POST /api/telegram/auth → telegram_auth
+2025-12-10 18:37:39,622 [INFO] app: Registered route: POST /api/telegram/notify → telegram_notify
+2025-12-10 18:37:39,624 [INFO] app: Registered route: GET /api/tasks → tasks_list
+2025-12-10 18:37:39,624 [INFO] app: Registered route: POST /api/tasks → tasks_create
+2025-12-10 18:37:39,625 [INFO] app: Registered route: PUT /api/tasks/<int:id> → tasks_update
+2025-12-10 18:37:39,626 [INFO] app: Registered route: DELETE /api/tasks/<int:id> → tasks_delete
+2025-12-10 18:37:39,628 [INFO] app: Registered route: GET /api/docs → docs_list
+2025-12-10 18:37:39,630 [INFO] app: Registered route: POST /api/docs → docs_create
+2025-12-10 18:37:39,632 [INFO] app: Registered route: PUT /api/docs/<int:id> → docs_update
+2025-12-10 18:37:39,634 [INFO] app: Registered route: GET /api/calendar/events → events_list
+2025-12-10 18:37:39,635 [INFO] app: Registered route: POST /api/calendar/events → events_create
+2025-12-10 18:37:39,635 [INFO] app: Registered route: GET /api/users → users_list
+2025-12-10 18:37:39,636 [INFO] app: Registered route: POST /api/users → users_create
+2025-12-10 18:37:39,654 [WARNING] werkzeug:  * Debugger is active!
+2025-12-10 18:37:39,657 [INFO] werkzeug:  * Debugger PIN: 108-000-919
+2025-12-10 18:37:44,999 [INFO] telegram_auth: Authenticated user: 111111111
+2025-12-10 18:37:44,999 [INFO] werkzeug: 127.0.0.1 - - [10/Dec/2025 18:37:44] "POST /api/telegram/auth HTTP/1.1" 200 -
+2025-12-10 18:37:47,045 [INFO] werkzeug: 127.0.0.1 - - [10/Dec/2025 18:37:47] "GET /api/users HTTP/1.1" 200 -
+2025-12-10 18:37:49,074 [INFO] werkzeug: 127.0.0.1 - - [10/Dec/2025 18:37:49] "[31m[1mPOST /api/users HTTP/1.1[0m" 400 -
