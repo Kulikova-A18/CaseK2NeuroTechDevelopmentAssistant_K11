@@ -23,7 +23,7 @@ from modules.handlers import (
 from modules.api_server import run_api_server
 from modules.auth import is_authorized, is_admin
 
-TOKEN = '8521671675:AAGHlyyyx59TWb3RBVD-l6hAlnP0kHg03lU'
+TOKEN = ''
 
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
