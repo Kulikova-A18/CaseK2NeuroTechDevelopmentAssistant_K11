@@ -5,18 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dec9a7c9-d295-4877-be12-37468363320b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/api_server.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/auth.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/csv_storage.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/handlers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/invite_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/modules/telegram_bot.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram_bot/readme.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/CaseK2NeuroTechDevelopmentAssistant_K11.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CaseK2NeuroTechDevelopmentAssistant_K11.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/docs_create.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/docs_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/docs_update.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/events_create.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/events_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/tasks_create.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/tasks_delete.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/tasks_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/tasks_update.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/telegram_auth.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/telegram_notify.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/users_create.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/handlers/users_list.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/logger.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/modules/docs.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/modules/events.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/modules/tasks.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/modules/users.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/readme.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/routes.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/test/init_csv.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/test/test_client.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/test/test_client_admin.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/telegram_bot/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/telegram_bot/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,9 +42,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="36cUKBScNUHOAslxay6Zpd45Q47" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -39,14 +55,28 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.app (1).executor": "Run",
     "Python.app.executor": "Run",
+    "Python.init_csv.executor": "Run",
+    "Python.test_client (1).executor": "Run",
+    "Python.test_client.executor": "Run",
+    "Python.test_client_admin (1).executor": "Run",
+    "Python.test_client_admin.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/USER/Desktop/CaseK2NeuroTechDevelopmentAssistant_K11"
+    "last_opened_file_path": "C:/Users/USER/Desktop/CaseK2NeuroTechDevelopmentAssistant_K11/server"
   }
 }]]></component>
-  <component name="RunManager">
-    <configuration name="app" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\USER\Desktop\CaseK2NeuroTechDevelopmentAssistant_K11\server" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\USER\Desktop\CaseK2NeuroTechDevelopmentAssistant_K11\server\test" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.test_client_admin (1)">
+    <configuration name="app (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CaseK2NeuroTechDevelopmentAssistant_K11" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -55,11 +85,99 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/telegram_bot" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/telegram_bot/app.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/server/app.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_client (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CaseK2NeuroTechDevelopmentAssistant_K11" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/server/test/test_client.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CaseK2NeuroTechDevelopmentAssistant_K11" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\USER\Desktop\CaseK2NeuroTechDevelopmentAssistant_K11\server\test\test_client.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_client_admin (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CaseK2NeuroTechDevelopmentAssistant_K11" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/server/test/test_client_admin.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_client_admin" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CaseK2NeuroTechDevelopmentAssistant_K11" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\USER\Desktop\CaseK2NeuroTechDevelopmentAssistant_K11\server\test\test_client_admin.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -70,7 +188,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.app" />
+        <item itemvalue="Python.test_client_admin (1)" />
+        <item itemvalue="Python.app (1)" />
+        <item itemvalue="Python.test_client (1)" />
+        <item itemvalue="Python.test_client" />
+        <item itemvalue="Python.test_client_admin" />
       </list>
     </recent_temporary>
   </component>
@@ -91,16 +213,5 @@
       <updated>1765305288107</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/telegram_bot/modules/telegram_bot.py</url>
-          <line>15</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

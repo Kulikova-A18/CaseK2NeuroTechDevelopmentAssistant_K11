@@ -1,0 +1,62 @@
+routes:
+  # === Telegram ===
+  - path: /api/telegram/auth
+    method: POST
+    entity: telegram
+    action: auth
+  - path: /api/telegram/notify
+    method: POST
+    entity: telegram
+    action: notify
+
+  # === Tasks ===
+  - path: /api/tasks
+    method: GET
+    entity: tasks
+    action: list
+  - path: /api/tasks
+    method: POST
+    entity: tasks
+    action: create
+  - path: /api/tasks/<int:id>
+    method: PUT
+    entity: tasks
+    action: update
+  - path: /api/tasks/<int:id>
+    method: DELETE
+    entity: tasks
+    action: delete
+
+  # === Docs ===
+  - path: /api/docs
+    method: GET
+    entity: docs
+    action: list
+  - path: /api/docs
+    method: POST
+    entity: docs
+    action: create
+  - path: /api/docs/<int:id>
+    method: PUT
+    entity: docs
+    action: update
+
+  # === Events ===
+  - path: /api/calendar/events
+    method: GET
+    entity: events
+    action: list
+  - path: /api/calendar/events
+    method: POST
+    entity: events
+    action: create
+
+  # === Users (admin-only) ===
+  - path: /api/users
+    method: GET
+    entity: users
+    action: list
+  - path: /api/users
+    method: POST
+    entity: users
+    action: create
