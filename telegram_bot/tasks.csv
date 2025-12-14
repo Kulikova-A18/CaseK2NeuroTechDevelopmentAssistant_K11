@@ -1,2 +1,0 @@
-task_id,title,description,status,assignee_user_id,creator_user_id,created_at,updated_at,due_date,completed_at,priority,tags
-1,Финализировать логику бота,Использовать telegram_username для авторизации,done,1,1,2025-12-05 09:00:00,2025-12-09 22:55:01,2025-12-15 23:59:59,2025-12-09 22:55:01,high,"[""бот"", ""авторизация""]"

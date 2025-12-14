@@ -1,0 +1,60 @@
+# config.yaml
+# Конфигурация системы управления задачами
+
+# Режим безопасности
+# Если is_security: false, то все пользователи могут все делать что и администратор
+security:
+  enabled: false  # Измените на false для отключения безопасности
+  validation_method: "telegram_username"
+  session_timeout_hours: 24
+  admin_only_endpoints:
+    - "/api/users"
+    - "/api/system/stats"
+    - "/api/export/full"
+  rate_limiting:
+    requests_per_minute: 100
+    llm_requests_per_day: 50
+
+# Настройки логирования
+logging:
+  level: "INFO"
+  file_path: "./logs/task_system.log"
+  max_size_mb: 100
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  retention_days: 30
+
+# Настройки производительности
+performance:
+  cache_enabled: true
+  cache_ttl_seconds: 300
+  csv_read_batch_size: 1000
+  worker_processes: 4
+  max_file_size_mb: 10
+
+# Интеграция с Telegram
+telegram:
+  bot_token: "${TELEGRAM_BOT_TOKEN}"  # Будет заменено на значение из .env
+  webhook_url: "https://api.example.com/webhook"
+  polling_interval: 2
+
+# Интеграция с LLM (демо-режим)
+llm:
+  enabled: true
+  provider: "demo"  # В демо-режиме
+  api_key: ""
+  model: "demo-gpt"
+  max_tokens: 2000
+  cache_minutes: 60
+  timeout_seconds: 60
+
+# Настройки сервера
+server:
+  host: "0.0.0.0"
+  port: 5000
+  ssl_enabled: false
+  max_connections: 1000
+  request_timeout: 30
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+  debug: true

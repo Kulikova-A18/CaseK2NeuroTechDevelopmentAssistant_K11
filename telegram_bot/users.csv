@@ -1,4 +1,0 @@
-user_id,telegram_user_id,telegram_username,full_name,registration_timestamp,last_login,is_active,role
-1,123456789,kulisdkova_alyona,Алёна Куликова,2025-12-10 10:00:00,2025-12-10 10:00:00,True,admin
-2,987654321,kulikovaвы_alyona,Тест Пользователь,2025-12-01 12:00:00,2025-12-09 15:30:00,True,member
-3,923353709,kulikova_alyona,Алёна Куликова,2025-12-09 23:10:12,2025-12-09 23:10:12,True,member
