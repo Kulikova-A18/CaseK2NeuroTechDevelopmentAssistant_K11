@@ -3,82 +3,102 @@
 set -e
 set -x
 
-echo "=== Запуск проекта CaseK2NeuroTechDevelopmentAssistant через Docker ==="
-echo "Текущая директория: $(pwd)"
+echo "=== Launching CaseK2NeuroTechDevelopmentAssistant project via Docker ==="
+echo "Current directory: $(pwd)"
 echo
 
-# Проверка наличия docker-compose
+# Check for .env files in all directories and create from .env.copy if needed
+echo "Checking for .env files in all project directories..."
+find . -type f -name ".env.copy" | while read copy_file; do
+    dir=$(dirname "$copy_file")
+    env_file="$dir/.env"
+    
+    if [ -f "$copy_file" ]; then
+        if [ ! -f "$env_file" ]; then
+            echo "Creating .env from .env.copy in: $dir"
+            cp "$copy_file" "$env_file"
+            echo "Created: $env_file"
+        else
+            echo ".env already exists in: $dir"
+        fi
+    fi
+done
+
+echo "Environment file setup completed."
+echo
+
+# Check for docker-compose availability
 if ! command -v docker-compose &> /dev/null; then
-    echo "Ошибка: docker-compose не установлен!"
-    echo "Установите Docker и Docker Compose"
+    echo "Error: docker-compose is not installed!"
+    echo "Please install Docker and Docker Compose"
     exit 1
 fi
 
-# Проверка наличия необходимых файлов
+# Check for necessary files
 if [ ! -f "docker-compose.yml" ]; then
-    echo "Ошибка: docker-compose.yml не найден!"
+    echo "Error: docker-compose.yml not found!"
     exit 1
 fi
 
-# Параметры запуска
+# Launch parameters
 ACTION=${1:-up}
 FORCE_REBUILD=${2:-false}
 
 case $ACTION in
     "up")
         if [ "$FORCE_REBUILD" = "true" ]; then
-            echo "Сборка и запуск контейнеров..."
+            echo "Building and launching containers..."
             docker-compose up -d --build
         else
-            echo "Запуск контейнеров..."
+            echo "Launching containers..."
             docker-compose up -d
         fi
         ;;
     "down")
-        echo "Остановка контейнеров..."
+        echo "Stopping containers..."
         docker-compose down
         ;;
     "build")
-        echo "Сборка контейнеров..."
+        echo "Building containers..."
         docker-compose build
         ;;
     "logs")
-        echo "Просмотр логов..."
+        echo "Viewing logs..."
         docker-compose logs -f
         ;;
     "restart")
-        echo "Перезапуск контейнеров..."
+        echo "Restarting containers..."
         docker-compose restart
         ;;
     "clean")
-        echo "Очистка..."
+        echo "Cleaning up..."
         docker-compose down -v
         ;;
     "check")
-        echo "=== Статус контейнеров ==="
+        echo "=== Container status ==="
         docker-compose ps
-        echo -e "\n=== Проверка сервисов ==="
+        echo -e "\n=== Service verification ==="
         
-        # Проверка бэкенда
+        # Backend check
         if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 | grep -q "200\|404"; then
-            echo "✓ Backend доступен на http://localhost:5000"
+            echo "Backend available at http://localhost:5000"
         else
-            echo "✗ Backend недоступен"
+            echo "Backend unavailable"
         fi
         
-        # Проверка фронтенда
+        # Frontend check
         if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -q "200"; then
-            echo "✓ Frontend доступен на http://localhost:3000"
+            echo "Frontend available at http://localhost:3000"
         else
-            echo "✗ Frontend недоступен"
+            echo "Frontend unavailable"
         fi
         ;;
     *)
-        echo "Использование: $0 [up|down|build|logs|restart|clean|check] [true для пересборки]"
-        echo "Примеры:"
-        echo "  $0 up          # Запуск контейнеров"
-        echo "  $0 up true     # Пересборка и запуск"
-        echo "  $0 check       # Проверка статуса"
+        echo "Usage: $0 [up|down|build|logs|restart|clean|check] [true for rebuild]"
+        echo "Examples:"
+        echo "  $0 up          # Launch containers"
+        echo "  $0 up true     # Rebuild and launch"
+        echo "  $0 check       # Check status"
         exit 1
         ;;
 esac
