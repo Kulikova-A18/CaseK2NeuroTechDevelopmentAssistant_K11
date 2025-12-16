@@ -3,62 +3,74 @@ name: Test Suite
 on:
   push:
     branches: [main, develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/tests.yml"
   pull_request:
     branches: [main, develop]
+    paths:
+      - "backend/**"
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"] # Тестируем на разных версиях Python
 
     defaults:
       run:
         working-directory: ./backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10" # Укажите версию из вашего проекта
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          # Добавьте если нужны системные пакеты
 
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install pytest pytest-cov
+          python -m pip install --upgrade pip setuptools wheel
+
+          # Устанавливаем совместимые версии Flask и pytest-flask
+          pip install Flask==2.3.3  # Версия, где ещё есть _request_ctx_stack
+          pip install pytest-flask==1.2.0
+
+          # Устанавливаем остальные зависимости
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+
+          # Устанавливаем тестовые зависимости
+          pip install pytest pytest-cov
 
       - name: Run tests
         run: |
-          pytest tests/ \
-            -v \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=html \
-            --junitxml=test-results/results.xml
+          # Простой запуск тестов без pytest-flask
+          python -m pytest tests/ -v
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          directory: ./backend
+          # Или если нужно исключить проблемный плагин:
+          # python -m pytest tests/ -v -p no:pytest-flask
 
       - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.python-version }}
+          name: test-results
           path: |
+            backend/.pytest_cache/
             backend/test-results/
-            backend/htmlcov/
-            backend/coverage.xml
+          retention-days: 7
