@@ -2,4 +2,4 @@ task_id,title,description,status,assignee,creator,created_at,updated_at,due_date
 101,Разработка REST API,Создать API endpoints для системы управления задачами,in_progress,@developer_alex,@manager_anna,,,,,high,"[""backend"", ""api"", ""priority""]"
 102,Исправить критический баг,Ошибка при сохранении данных в CSV,done,@developer_alex,@admin_ivan,,,,,urgent,"[""bug"", ""critical"", ""hotfix""]"
 103,Обновить документацию,Добавить новые API методы в документацию,todo,@developer_alex,@manager_anna,,,,,medium,"[""docs"", ""api""]"
-104,да,помогите,todo,,@kulikova_alyona,,,2024-01-31,,high,
+104,да,помогите,in_progress,,@kulikova_alyona,,2025-12-16 07:33:55,2024-01-31,,high,

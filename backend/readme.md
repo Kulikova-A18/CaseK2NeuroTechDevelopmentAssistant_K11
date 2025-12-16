@@ -98,7 +98,7 @@ curl -X GET http://localhost:5000/api/tasks \
 # Переменные окружения для системы управления задачами
 
 # Секретный ключ для JWT токенов
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_SECRET=your-secret-key-change-this
 
 # Токен Telegram бота (HTTP API)
 TELEGRAM_BOT_TOKEN=000008521671675:AAGHlyyyx59TWb3RBVD-l6hAlnP0kHg03lU00000

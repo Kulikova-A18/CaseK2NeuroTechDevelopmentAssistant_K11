@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/config.yaml:/app/config.yaml
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend/kanban-client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://backend:5000
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  telegram-bot:
+    build:
+      context: ./frontend/telegram_bot
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=http://backend:5000
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
