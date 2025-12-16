@@ -1,0 +1,495 @@
+name: Telegram Bot Test Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "frontend/telegram_bot/**"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "frontend/telegram_bot/**"
+  workflow_dispatch:
+
+jobs:
+  setup-environment:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+
+    outputs:
+      has-tests: ${{ steps.check-tests.outputs.has-tests }}
+      python-version: ${{ steps.setup-python.outputs.python-version }}
+      has-requirements: ${{ steps.check-requirements.outputs.has-requirements }}
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Check if requirements file exists
+        id: check-requirements
+        run: |
+          if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+            echo "has-requirements=true" >> $GITHUB_OUTPUT
+            echo "Found requirements file"
+          else
+            echo "has-requirements=false" >> $GITHUB_OUTPUT
+            echo "No requirements file found"
+          fi
+
+      - name: Check if tests exist
+        id: check-tests
+        run: |
+          if [ -d "tests" ] && [ -n "$(find tests -name '*.py' -type f 2>/dev/null)" ]; then
+            echo "has-tests=true" >> $GITHUB_OUTPUT
+            echo "Found test files:"
+            find tests -name "*.py" -type f
+          else
+            echo "has-tests=false" >> $GITHUB_OUTPUT
+            echo "No test files found in tests directory"
+          fi
+
+      - name: Cache Python packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-telegram-bot-pip-${{ hashFiles('frontend/telegram_bot/requirements*.txt', 'frontend/telegram_bot/pyproject.toml', 'frontend/telegram_bot/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-telegram-bot-pip-
+
+      - name: Show project structure
+        run: |
+          echo "=== Project Structure ==="
+          find . -type f -name "*.py" | head -20
+          echo ""
+          echo "=== Main files ==="
+          ls -la *.py 2>/dev/null || echo "No main Python files"
+
+  install-dependencies:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    needs: setup-environment
+
+    if: needs.setup-environment.outputs.has-requirements == 'true'
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Restore pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-telegram-bot-pip-${{ hashFiles('frontend/telegram_bot/requirements*.txt', 'frontend/telegram_bot/pyproject.toml', 'frontend/telegram_bot/setup.py') }}
+
+      - name: Upgrade pip and setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install Telegram bot dependencies
+        run: |
+          # Базовые зависимости для Telegram бота
+          pip install python-telegram-bot==20.3
+          pip install python-dotenv
+
+          # Дополнительные возможные зависимости
+          pip install requests
+          pip install aiohttp
+
+      - name: Install project dependencies
+        run: |
+          if [ -f requirements.txt ]; then 
+            echo "Installing from requirements.txt"
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            echo "Installing from pyproject.toml"
+            pip install -e .
+          elif [ -f setup.py ]; then
+            echo "Installing from setup.py"
+            pip install -e .
+          fi
+
+      - name: Install test dependencies
+        run: |
+          # Устанавливаем тестовые зависимости
+          pip install pytest pytest-asyncio pytest-cov
+          pip install pytest-mock
+          # Для тестирования Telegram ботов
+          pip install telegram-test-bot
+
+      - name: Verify installations
+        run: |
+          echo "=== Installed packages ==="
+          pip list | grep -E "(telegram|pytest|asyncio|dotenv)"
+          echo ""
+          echo "=== Python version ==="
+          python --version
+
+  lint-code:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install linters
+        run: |
+          pip install flake8 black isort mypy pylint
+
+      - name: Check code style with black
+        run: |
+          echo "=== Checking code style with black ==="
+          black --check . || echo "Code style issues found"
+
+      - name: Check imports with isort
+        run: |
+          echo "=== Checking imports with isort ==="
+          isort --check-only . || echo "Import sorting issues found"
+
+      - name: Run flake8
+        run: |
+          echo "=== Running flake8 ==="
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || echo "Flake8 issues found"
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run pylint
+        run: |
+          echo "=== Running pylint ==="
+          find . -name "*.py" -not -path "./tests/*" -exec pylint {} --rcfile=.pylintrc 2>/dev/null \; || echo "Pylint issues found"
+
+  run-unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-telegram-bot-pip-${{ hashFiles('frontend/telegram_bot/requirements*.txt', 'frontend/telegram_bot/pyproject.toml', 'frontend/telegram_bot/setup.py') }}
+
+      - name: Create test environment variables
+        run: |
+          # Создаем тестовые переменные окружения
+          echo "BOT_TOKEN=test_token" >> .env.test
+          echo "ADMIN_ID=123456789" >> .env.test
+          echo "DATABASE_URL=sqlite:///test.db" >> .env.test
+
+      - name: Run unit tests
+        id: run-unit-tests
+        env:
+          BOT_TOKEN: test_token
+          ADMIN_ID: "123456789"
+          TESTING: "true"
+        run: |
+          echo "=== Starting unit tests ==="
+
+          # Проверяем структуру тестов
+          if [ -d "tests/unit" ]; then
+            echo "Running tests from tests/unit/"
+            python -m pytest tests/unit/ \
+              -v \
+              --asyncio-mode=auto \
+              --cov=. \
+              --cov-report=xml \
+              --cov-report=html \
+              --junitxml=test-results/unit.xml
+          elif [ -d "tests" ]; then
+            echo "Running all tests from tests/"
+            python -m pytest tests/ \
+              -v \
+              --asyncio-mode=auto \
+              --cov=. \
+              --cov-report=xml \
+              --junitxml=test-results/all.xml
+          else
+            echo "No tests directory found"
+            exit 0
+          fi
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-bot-unit-test-results
+          path: |
+            frontend/telegram_bot/test-results/
+            frontend/telegram_bot/coverage.xml
+            frontend/telegram_bot/htmlcov/
+          retention-days: 30
+
+  run-integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Check for integration tests
+        id: check-integration
+        run: |
+          if [ -d "tests/integration" ] || [ -d "tests/integration_tests" ]; then
+            echo "integration-tests=true" >> $GITHUB_OUTPUT
+            echo "Found integration tests"
+          else
+            echo "integration-tests=false" >> $GITHUB_OUTPUT
+            echo "No integration tests found"
+          fi
+
+      - name: Run integration tests
+        if: steps.check-integration.outputs.integration-tests == 'true'
+        env:
+          BOT_TOKEN: test_token
+          ADMIN_ID: "123456789"
+          TESTING: "true"
+          DATABASE_URL: sqlite:///test_integration.db
+        run: |
+          echo "=== Starting integration tests ==="
+
+          if [ -d "tests/integration" ]; then
+            python -m pytest tests/integration/ \
+              -v \
+              --asyncio-mode=auto \
+              --junitxml=test-results/integration.xml
+          elif [ -d "tests/integration_tests" ]; then
+            python -m pytest tests/integration_tests/ \
+              -v \
+              --asyncio-mode=auto \
+              --junitxml=test-results/integration.xml
+          fi
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-bot-integration-test-results
+          path: frontend/telegram_bot/test-results/integration.xml
+          retention-days: 30
+
+  run-bot-functionality-tests:
+    name: Run Bot Functionality Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Check for bot tests
+        id: check-bot-tests
+        run: |
+          if [ -d "tests/bot" ] || [ -d "tests/telegram" ] || [ -f "tests/test_bot.py" ]; then
+            echo "bot-tests=true" >> $GITHUB_OUTPUT
+            echo "Found bot functionality tests"
+          else
+            echo "bot-tests=false" >> $GITHUB_OUTPUT
+            echo "No bot functionality tests found"
+          fi
+
+      - name: Run bot functionality tests
+        if: steps.check-bot-tests.outputs.bot-tests == 'true'
+        env:
+          BOT_TOKEN: test_token
+          ADMIN_ID: "123456789"
+          TESTING: "true"
+        run: |
+          echo "=== Starting bot functionality tests ==="
+
+          if [ -d "tests/bot" ]; then
+            python -m pytest tests/bot/ \
+              -v \
+              --asyncio-mode=auto \
+              --junitxml=test-results/bot.xml
+          elif [ -d "tests/telegram" ]; then
+            python -m pytest tests/telegram/ \
+              -v \
+              --asyncio-mode=auto \
+              --junitxml=test-results/bot.xml
+          elif [ -f "tests/test_bot.py" ]; then
+            python -m pytest tests/test_bot.py \
+              -v \
+              --asyncio-mode=auto \
+              --junitxml=test-results/bot.xml
+          fi
+
+      - name: Upload bot test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-bot-functionality-results
+          path: frontend/telegram_bot/test-results/bot.xml
+          retention-days: 30
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    needs: setup-environment
+
+    defaults:
+      run:
+        working-directory: ./frontend/telegram_bot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety
+
+      - name: Run bandit security scan
+        run: |
+          echo "=== Running bandit security scan ==="
+          bandit -r . -f json -o bandit-report.json || true
+
+      - name: Check for known vulnerabilities
+        run: |
+          echo "=== Checking for known vulnerabilities ==="
+          safety check --json --output safety-report.json || true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-bot-security-reports
+          path: |
+            frontend/telegram_bot/bandit-report.json
+            frontend/telegram_bot/safety-report.json
+          retention-days: 30
+
+  notify-status:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [generate-reports]
+
+    if: always()
+
+    steps:
+      - name: Determine overall status
+        id: status-check
+        run: |
+          # Проверяем статус всех jobs
+          ALL_JOBS="setup-environment install-dependencies lint-code run-unit-tests run-integration-tests run-bot-functionality-tests security-check"
+
+          SUCCESS_COUNT=0
+          FAILURE_COUNT=0
+          SKIPPED_COUNT=0
+
+          for job in $ALL_JOBS; do
+            RESULT="${{ needs[join('].[', split('],', job))].result }}"
+            if [ "$RESULT" = "success" ]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            elif [ "$RESULT" = "failure" ]; then
+              FAILURE_COUNT=$((FAILURE_COUNT + 1))
+            elif [ "$RESULT" = "skipped" ]; then
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            fi
+          done
+
+          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+          echo "failure_count=$FAILURE_COUNT" >> $GITHUB_OUTPUT
+          echo "skipped_count=$SKIPPED_COUNT" >> $GITHUB_OUTPUT
+
+          if [ $FAILURE_COUNT -gt 0 ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "Some jobs failed"
+          elif [ $SUCCESS_COUNT -gt 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Jobs completed successfully"
+          else
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "All jobs were skipped"
+          fi
+
+      - name: Send final notification
+        run: |
+          echo "=== Telegram Bot Test Pipeline Results ==="
+          echo ""
+          echo "Overall Status: ${{ steps.status-check.outputs.status }}"
+          echo "Successful Jobs: ${{ steps.status-check.outputs.success_count }}"
+          echo "Failed Jobs: ${{ steps.status-check.outputs.failure_count }}"
+          echo "Skipped Jobs: ${{ steps.status-check.outputs.skipped_count }}"
+          echo ""
+          echo "Workflow URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo ""
+          echo "=== Job Details ==="
+          echo "- Setup: ${{ needs.setup-environment.result }}"
+          echo "- Dependencies: ${{ needs.install-dependencies.result }}"
+          echo "- Linting: ${{ needs.lint-code.result }}"
+          echo "- Unit Tests: ${{ needs.run-unit-tests.result }}"
+          echo "- Integration Tests: ${{ needs.run-integration-tests.result }}"
+          echo "- Bot Tests: ${{ needs.run-bot-functionality-tests.result }}"
+          echo "- Security: ${{ needs.security-check.result }}"

@@ -29,7 +29,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-        # Сохраняем версию Python для использования в других jobs
 
       - name: Check if tests exist
         id: check-tests
@@ -107,7 +106,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup-environment, install-dependencies]
 
-    # Запускаем только если есть тесты
     if: needs.setup-environment.outputs.has-tests == 'true'
 
     defaults:
@@ -150,7 +148,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup-environment, install-dependencies]
 
-    # Запускаем только если есть интеграционные тесты
     if: needs.setup-environment.outputs.has-tests == 'true'
 
     defaults:
@@ -200,11 +197,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup-environment, install-dependencies]
 
-    # Запускаем только если есть E2E тесты
     if: needs.setup-environment.outputs.has-tests == 'true'
 
     services:
-      # Пример для тестов с базой данных
       postgres:
         image: postgres:13
         env:
@@ -263,58 +258,11 @@ jobs:
           path: backend/test-results/e2e.xml
           retention-days: 30
 
-  generate-reports:
-    name: Generate Test Reports
-    runs-on: ubuntu-latest
-    needs: [run-unit-tests, run-integration-tests, run-e2e-tests]
-
-    # Запускаем всегда, даже если предыдущие jobs упали
-    if: always()
-
-    defaults:
-      run:
-        working-directory: ./backend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download test artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Generate summary report
-        run: |
-          echo "# Test Execution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Jobs Status:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Unit Tests**: ${{ needs.run-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Integration Tests**: ${{ needs.run-integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **E2E Tests**: ${{ needs.run-e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "Tests completed at $(date)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Create combined test report
-        run: |
-          mkdir -p combined-results
-          # Объединяем результаты тестов если они есть
-          find artifacts -name "*.xml" -exec cp {} combined-results/ \;
-
-      - name: Upload combined report
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-test-results
-          path: backend/combined-results/
-          retention-days: 30
-
   notify-status:
     name: Notification
     runs-on: ubuntu-latest
     needs: [generate-reports]
 
-    # Запускаем всегда
     if: always()
 
     steps:
