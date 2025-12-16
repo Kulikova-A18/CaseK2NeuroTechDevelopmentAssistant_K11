@@ -1,11 +1,10 @@
-name: Test Suite
+name: Backend Tests
 
 on:
   push:
     branches: [main, develop]
     paths:
       - "backend/**"
-      - ".github/workflows/tests.yml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -24,46 +23,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10" # Укажите версию из вашего проекта
+          python-version: "3.10"
 
-      - name: Install system dependencies
+      - name: Install Python dependencies
         run: |
-          sudo apt-get update
-          # Добавьте если нужны системные пакеты
+          python -m pip install --upgrade pip
 
-      - name: Cache pip packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          # Сначала устанавливаем Flask и pytest-flask
+          pip install "Flask==2.3.3"
+          pip install "pytest-flask==1.2.0"
+          pip install "Werkzeug==2.3.7"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
+          # Затем устанавливаем зависимости проекта
+          if [ -f requirements.txt ]; then 
+            # Удаляем Flask из requirements.txt если он там есть
+            grep -v "Flask" requirements.txt > requirements_temp.txt || true
+            grep -v "flask" requirements_temp.txt > requirements_filtered.txt || true
+            grep -v "Werkzeug" requirements_filtered.txt > requirements_final.txt || true
+            pip install -r requirements_final.txt
+          fi
 
-          # Устанавливаем совместимые версии Flask и pytest-flask
-          pip install Flask==2.3.3  # Версия, где ещё есть _request_ctx_stack
-          pip install pytest-flask==1.2.0
-
-          # Устанавливаем остальные зависимости
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e .; fi
-
-          # Устанавливаем тестовые зависимости
+          # Устанавливаем pytest
           pip install pytest pytest-cov
 
       - name: Run tests
         run: |
-          # Простой запуск тестов без pytest-flask
-          python -m pytest tests/ -v
-
-          # Или если нужно исключить проблемный плагин:
-          # python -m pytest tests/ -v -p no:pytest-flask
+          python -m pytest tests/ -v --tb=short
 
       - name: Upload test results
         if: always()
@@ -71,6 +59,5 @@ jobs:
         with:
           name: test-results
           path: |
-            backend/.pytest_cache/
             backend/test-results/
           retention-days: 7
