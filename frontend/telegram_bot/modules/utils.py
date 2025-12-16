@@ -7,6 +7,12 @@ from io import BytesIO
 import logging
 from typing import List, Dict, Any, Optional
 
+from aiogram.types import (
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    ReplyKeyboardMarkup, KeyboardButton,
+    ReplyKeyboardRemove
+)
+
 logger = logging.getLogger(__name__)
 
 
