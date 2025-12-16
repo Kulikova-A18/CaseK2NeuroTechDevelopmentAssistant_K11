@@ -261,7 +261,7 @@ jobs:
   notify-status:
     name: Notification
     runs-on: ubuntu-latest
-    needs: [generate-reports]
+    needs: [install-dependencies]
 
     if: always()
 
