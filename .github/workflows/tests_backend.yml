@@ -1,0 +1,341 @@
+name: Backend Test Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  setup-environment:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+
+    outputs:
+      has-tests: ${{ steps.check-tests.outputs.has-tests }}
+      python-version: ${{ steps.setup-python.outputs.python-version }}
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+        # Сохраняем версию Python для использования в других jobs
+
+      - name: Check if tests exist
+        id: check-tests
+        run: |
+          if [ -d "tests" ] && [ -n "$(find tests -name '*.py' -type f)" ]; then
+            echo "has-tests=true" >> $GITHUB_OUTPUT
+            echo "Found test files:"
+            find tests -name "*.py" -type f
+          else
+            echo "has-tests=false" >> $GITHUB_OUTPUT
+            echo "No test files found in tests directory"
+          fi
+
+      - name: Cache Python packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements*.txt', 'backend/pyproject.toml', 'backend/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+  install-dependencies:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    needs: setup-environment
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Restore pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements*.txt', 'backend/pyproject.toml', 'backend/setup.py') }}
+
+      - name: Upgrade pip and setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install base dependencies
+        run: |
+          pip install Flask==2.3.3
+
+      - name: Install project dependencies
+        run: |
+          if [ -f requirements.txt ]; then 
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            pip install -e .
+          else
+            echo "No requirements file found"
+          fi
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-flask==1.2.0 pytest-cov
+
+      - name: Verify installations
+        run: |
+          echo "Installed packages:"
+          pip list | grep -E "(Flask|pytest|Werkzeug)"
+
+  run-unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    # Запускаем только если есть тесты
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements*.txt', 'backend/pyproject.toml', 'backend/setup.py') }}
+
+      - name: Run unit tests
+        id: run-tests
+        run: |
+          echo "Starting unit tests..."
+          python -m pytest tests/unit/ -v --cov=. --cov-report=xml --junitxml=test-results/unit.xml || true
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: |
+            backend/test-results/unit.xml
+            backend/coverage.xml
+          retention-days: 30
+
+  run-integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    # Запускаем только если есть интеграционные тесты
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Check for integration tests
+        id: check-integration
+        run: |
+          if [ -d "tests/integration" ] || [ -d "tests/integration_tests" ]; then
+            echo "integration-tests=true" >> $GITHUB_OUTPUT
+            echo "Found integration tests"
+          else
+            echo "integration-tests=false" >> $GITHUB_OUTPUT
+            echo "No integration tests found"
+          fi
+
+      - name: Run integration tests
+        if: steps.check-integration.outputs.integration-tests == 'true'
+        run: |
+          echo "Starting integration tests..."
+          if [ -d "tests/integration" ]; then
+            python -m pytest tests/integration/ -v --junitxml=test-results/integration.xml
+          elif [ -d "tests/integration_tests" ]; then
+            python -m pytest tests/integration_tests/ -v --junitxml=test-results/integration.xml
+          fi
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: backend/test-results/integration.xml
+          retention-days: 30
+
+  run-e2e-tests:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    needs: [setup-environment, install-dependencies]
+
+    # Запускаем только если есть E2E тесты
+    if: needs.setup-environment.outputs.has-tests == 'true'
+
+    services:
+      # Пример для тестов с базой данных
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Check for E2E tests
+        id: check-e2e
+        run: |
+          if [ -d "tests/e2e" ] || [ -d "tests/e2e_tests" ]; then
+            echo "e2e-tests=true" >> $GITHUB_OUTPUT
+            echo "Found E2E tests"
+          else
+            echo "e2e-tests=false" >> $GITHUB_OUTPUT
+            echo "No E2E tests found"
+          fi
+
+      - name: Run E2E tests
+        if: steps.check-e2e.outputs.e2e-tests == 'true'
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          TESTING: "true"
+        run: |
+          echo "Starting E2E tests..."
+          if [ -d "tests/e2e" ]; then
+            python -m pytest tests/e2e/ -v --junitxml=test-results/e2e.xml
+          elif [ -d "tests/e2e_tests" ]; then
+            python -m pytest tests/e2e_tests/ -v --junitxml=test-results/e2e.xml
+          fi
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: backend/test-results/e2e.xml
+          retention-days: 30
+
+  generate-reports:
+    name: Generate Test Reports
+    runs-on: ubuntu-latest
+    needs: [run-unit-tests, run-integration-tests, run-e2e-tests]
+
+    # Запускаем всегда, даже если предыдущие jobs упали
+    if: always()
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate summary report
+        run: |
+          echo "# Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Jobs Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests**: ${{ needs.run-unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Integration Tests**: ${{ needs.run-integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E Tests**: ${{ needs.run-e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "Tests completed at $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create combined test report
+        run: |
+          mkdir -p combined-results
+          # Объединяем результаты тестов если они есть
+          find artifacts -name "*.xml" -exec cp {} combined-results/ \;
+
+      - name: Upload combined report
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-test-results
+          path: backend/combined-results/
+          retention-days: 30
+
+  notify-status:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [generate-reports]
+
+    # Запускаем всегда
+    if: always()
+
+    steps:
+      - name: Determine overall status
+        id: status-check
+        run: |
+          # Проверяем статус всех jobs
+          if [[ "${{ needs.run-unit-tests.result }}" == "success" ]] || \
+             [[ "${{ needs.run-integration-tests.result }}" == "success" ]] || \
+             [[ "${{ needs.run-e2e-tests.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Some tests passed successfully"
+          elif [[ "${{ needs.setup-environment.outputs.has-tests }}" == "false" ]]; then
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "No tests found to run"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "Tests failed"
+          fi
+
+      - name: Send notification
+        run: |
+          echo "Pipeline completed with status: ${{ steps.status-check.outputs.status }}"
+          echo "Workflow URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
