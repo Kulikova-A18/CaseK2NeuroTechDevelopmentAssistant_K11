@@ -1,0 +1,45 @@
+# Конфигурация cron задач для Task Management System
+cron:
+  jobs:
+    # Уведомления о дедлайнах
+    deadline_notifications:
+      schedule: "0 9 * * *"          # Каждый день в 09:00
+      enabled: true
+      task: "check_deadlines"
+      description: "Проверка дедлайнов и отправка уведомлений"
+    
+    # Ежедневный отчет
+    daily_report:
+      schedule: "0 18 * * 1-5"       # Пн-Пт в 18:00
+      enabled: true
+      task: "generate_daily_report"
+      description: "Генерация ежедневного отчета"
+    
+    # Очистка кэша
+    cache_cleanup:
+      schedule: "0 3 * * *"          # Каждый день в 03:00
+      enabled: true
+      task: "cleanup_cache"
+      description: "Очистка устаревшего кэша"
+    
+    # LLM анализ активности
+    weekly_analysis:
+      schedule: "0 10 * * 1"         # Каждый понедельник в 10:00
+      enabled: ${LLM_ENABLED:false}  # Зависит от конфигурации
+      task: "weekly_llm_analysis"
+      description: "Еженедельный AI-анализ активности"
+    
+    # Синхронизация с внешними системами
+    telegram_sync:
+      schedule: "*/15 * * * *"       # Каждые 15 минут
+      enabled: true
+      task: "sync_telegram_status"
+      description: "Синхронизация статусов с Telegram"
+
+# Настройки планировщика
+scheduler:
+  timezone: "Europe/Moscow"
+  jobstore: "memory"                # или "sqlalchemy"
+  thread_pool_size: 5
+  misfire_grace_time: 600           # 10 минут
+  coalesce: true                    # объединять пропущенные задачи
