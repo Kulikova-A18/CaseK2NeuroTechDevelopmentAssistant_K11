@@ -530,25 +530,27 @@ sequenceDiagram
         else Пользователь не имеет прав
             TASKS-->>API: Ошибка доступа
             API-->>C: 403 Forbidden
-            return
         end
     end
     
-    TASKS->>CSV: Проверить новый assignee (если указан)
-    CSV-->>TASKS: @developer_alex существует
-    TASKS->>CSV: Обновить запись задачи 101
-    Note over CSV: Обновить status, assignee, updated_at
-    CSV-->>TASKS: Запись обновлена
-    
-    alt Статус изменился на "done"
-        TASKS->>TASKS: Установить completed_at
-        TASKS->>CSV: Обновить completed_at
+    opt Если не было ошибки доступа
+        TASKS->>CSV: Проверить новый assignee (если указан)
+        CSV-->>TASKS: @developer_alex существует
+        TASKS->>CSV: Обновить запись задачи 101
+        Note over CSV: Обновить status, assignee, updated_at
+        CSV-->>TASKS: Запись обновлена
+        
+        alt Статус изменился на "done"
+            TASKS->>TASKS: Установить completed_at
+            TASKS->>CSV: Обновить completed_at
+        end
+        
+        TASKS->>WS: Отправить событие TASK_UPDATED
+        WS->>C: WebSocket обновление
+        Note over WS, C: Рассылка всем подключенным клиентам
+        TASKS-->>API: Задача обновлена
+        API-->>C: 200 OK
     end
-    
-    TASKS->>WS: Отправить событие TASK_UPDATED
-    WS-->>Все клиенты: WebSocket обновление
-    TASKS-->>API: Задача обновлена
-    API-->>C: 200 OK
 ```
 
 **Параметры запроса**:
