@@ -17,6 +17,17 @@ class DailyReport(TypedDict):
 
 
 # =========================
+# FAQ
+# =========================
+
+FAQIntentType = Literal["GENERAL_FAQ", "RAG_FAQ", "NOT_FAQ"]
+
+
+class FAQIntent(TypedDict):
+    intent: FAQIntentType
+
+
+# =========================
 # ANALYTICS
 # =========================
 

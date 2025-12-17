@@ -1,8 +1,1 @@
 telegram_username,full_name,role,is_active,registered_at,last_login,email,department
-@admin_ivan,Иван Петров,admin,True,,,ivan@company.com,IT
-@manager_anna,Анна Сидорова,manager,True,,,anna@company.com,Project Management
-@developer_alex,Алексей Козлов,member,True,,,alex@company.com,Development
-@viewer_olga,Ольга Новикова,viewer,True,,,olga@company.com,Sales
-@kulikovaыв_alyona,Алёна Куликова,admin,True,,2025-12-14 21:12:46,,
-@kulikova_alyona,Алёна Куликова,member,True,,2025-12-17 08:49:48,,
-@sadasd,asdasd asd,member,True,,2025-12-16 07:33:50,,

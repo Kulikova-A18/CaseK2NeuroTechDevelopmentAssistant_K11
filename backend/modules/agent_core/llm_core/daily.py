@@ -1,5 +1,3 @@
-print("daily.py loaded")
-
 from typing import Dict, Any
 
 from llm_core.prompts import (
@@ -26,7 +24,7 @@ def handle_daily_initial(
     api_url: str,
     api_key: str,
     model: str,
-    raw_text: str,
+    message: str,
 ) -> DailyReport:
     """
     Обработка первичного daily-ответа разработчика.
@@ -34,7 +32,7 @@ def handle_daily_initial(
     На выход — валидный DailyReport.
     """
 
-    user_prompt = build_daily_initial_prompt(raw_text)
+    user_prompt = build_daily_initial_prompt(message)
 
     try:
         result = call_llm_json(
@@ -94,5 +92,5 @@ def handle_daily_clarification(
         validated = validate_daily_json(result)
     except ValidationError as e:
         raise RuntimeError(f"Daily validation error (clarification): {e}") from e
-
+    
     return validated

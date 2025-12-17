@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 from typing import Optional, Dict, Any, Type, TypeVar
@@ -76,7 +78,6 @@ def call_llm_json(
             model=model,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            temperature=0.0,   # КРИТИЧНО: никакой креативности
             max_tokens=max_tokens,
         )
     except LLMTextError as e:

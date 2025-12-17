@@ -1,9 +1,17 @@
 from typing import Optional, Dict, Any, List
 import httpx
+import re
 
 
 class LLMTextError(Exception):
     pass
+
+
+def _strip_thinking(text: str) -> str:
+    """
+    Удаляет reasoning-блоки вида <think>...</think>
+    """
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
 
 def call_llm_text(
@@ -62,4 +70,6 @@ def call_llm_text(
             f"Bad LLM response: {e} | raw={response.text!r}"
         ) from e
 
-    return content.strip()
+    content = _strip_thinking(content)
+
+    return content

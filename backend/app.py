@@ -243,7 +243,8 @@ if __name__ == '__main__':
     # Create necessary directories
     os.makedirs(SystemConstants.DATA_DIR, exist_ok=True)
     os.makedirs('./logs', exist_ok=True)
-    
+
+    # delete on real product
     # Initialize sample data
     try:
         initialize_sample_data(tasks_manager, users_manager)
