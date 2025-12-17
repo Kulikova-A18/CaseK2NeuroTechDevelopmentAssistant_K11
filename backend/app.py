@@ -33,6 +33,7 @@ from modules.constants import SystemConstants
 from modules.models import AuthRequest, RefreshTokenRequest, TaskCreate, TaskUpdate, UserCreate, LLMAnalysisRequest
 from modules.decorators import require_auth, require_permission, validate_request
 from modules.utils import initialize_sample_data
+from modules.file_hash_manager import *
 
 
 # ============================================================================

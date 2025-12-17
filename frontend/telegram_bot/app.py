@@ -22,6 +22,67 @@ from modules.callback_handlers import (
 from aiogram.filters import Command, CommandStart
 from aiogram import F
 
+import asyncio
+from datetime import datetime
+
+async def greeting_timer_to_all_users():
+    """Таймер для отправки приветствия всем пользователям бота"""
+    logger.info("Запуск таймера рассылки приветствий...")
+    
+    # Счетчик для отслеживания количества отправок
+    iteration = 0
+    
+    while True:
+        iteration += 1
+        try:
+            # Получаем всех пользователей из сессий
+            all_users = user_sessions.get_all_users()
+            
+            if not all_users:
+                logger.info(f"Итерация {iteration}: Нет активных пользователей")
+            else:
+                logger.info(f"Итерация {iteration}: Найдено {len(all_users)} пользователей")
+                
+                success_count = 0
+                fail_count = 0
+                
+                for user_id in all_users:
+                    try:
+                        # Получаем информацию о пользователе
+                        user_info = user_sessions.get_session(user_id)
+                        username = user_info.get('username', '')
+                        first_name = user_info.get('first_name', '')
+                        
+                        # Формируем персонализированное сообщение
+                        name_to_use = first_name or username or "Пользователь"
+                        
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=f"👋 Привет, {name_to_use}!\n"
+                                 f"🕒 Время: {datetime.now().strftime('%H:%M:%S')}\n"
+                                 f"🤖 Бот активен и работает!"
+                        )
+                        success_count += 1
+                        logger.debug(f"Сообщение отправлено пользователю {user_id} (@{username})")
+                        
+                    except Exception as e:
+                        fail_count += 1
+                        logger.error(f"Ошибка отправки пользователю {user_id}: {str(e)[:100]}")
+                        continue
+                    
+                    # Пауза между отправками (чтобы не превысить лимиты Telegram)
+                    await asyncio.sleep(0.3)
+                
+                logger.info(f"Итерация {iteration}: Успешно {success_count}, Ошибок {fail_count}")
+            
+            # Ждем 5 секунд перед следующей рассылкой
+            logger.debug(f"Итерация {iteration}: Ожидание 5 секунд...")
+            await asyncio.sleep(5)
+            
+        except Exception as e:
+            logger.error(f"Критическая ошибка в таймере (итерация {iteration}): {e}")
+            await asyncio.sleep(5)  # Ждем перед повторной попыткой
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -78,8 +139,19 @@ async def main():
     logger.info(f"Bot started with {len(commands)} commands")
     logger.info(f"API server: {BotConstants.API_BASE_URL}")
     
-    # Start bot
-    await dp.start_polling(bot)
+    # Запуск таймера рассылки приветствий
+    timer_task = asyncio.create_task(greeting_timer_to_all_users())
+    logger.info("Таймер рассылки приветствий запущен (каждые 5 секунд)")
+    
+    try:
+        # Start bot polling
+        await dp.start_polling(bot)
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен по запросу пользователя")
+    finally:
+        # Остановка таймера при завершении
+        timer_task.cancel()
+        logger.info("Таймер рассылки остановлен")
 
 
 if __name__ == '__main__':

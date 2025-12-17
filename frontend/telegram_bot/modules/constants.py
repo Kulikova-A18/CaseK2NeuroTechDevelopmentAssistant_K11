@@ -14,7 +14,7 @@ class BotConstants:
     BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8521671675:AAGHlyyyx59TWb3RBVD-l6hAlnP0kHg03lU')
     
     # API server URL
-    API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:5000')
+    API_BASE_URL = os.getenv('API_BASE_URL', 'http://backend:5000')
     
     # Bot commands
     COMMANDS = [

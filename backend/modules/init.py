@@ -9,6 +9,7 @@ from modules.csv_manager import CSVDataManager
 from modules.cache_manager import CacheManager
 from modules.auth_manager import AuthManager
 from modules.decorators import *
+from modules.file_hash_manager import *
 
 # Initialize globals (will be set by app.py)
 config_manager = None
@@ -18,3 +19,4 @@ events_manager = None
 docs_manager = None
 cache_manager = None
 auth_manager = None
+file_hash_manager = None

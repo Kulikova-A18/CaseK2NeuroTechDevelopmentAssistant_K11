@@ -10,6 +10,9 @@ import threading
 from typing import Dict, Optional, List
 from datetime import datetime
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FileHashManager:
     """
