@@ -14,7 +14,7 @@ class AgentModule:
 
     def __init__(
         self,
-        api_key: str = "YOUR_API_KEY_HERE",
+        api_key: str = "38w68Yk1th",
         model: str = "Qwen/Qwen3-8B",
         api_url: str = "https://qwen3-8b.product.nova.neurotech.k2.cloud/v1/chat/completions",
         timeout_config: Optional[Dict[str, float]] = None

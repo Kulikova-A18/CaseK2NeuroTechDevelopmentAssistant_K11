@@ -12,6 +12,7 @@ from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton,
     ReplyKeyboardRemove
 )
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 logger = logging.getLogger(__name__)
 

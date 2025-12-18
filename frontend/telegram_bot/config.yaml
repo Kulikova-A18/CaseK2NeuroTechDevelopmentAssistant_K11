@@ -1,0 +1,210 @@
+# ====== start cron =========
+# Cron job configuration for Task Management System
+cron:
+  enabled: true  # Enable/disable cron globally. Set to false to disable all cron functionality
+  jobs:
+    # Deadline notifications - check for overdue tasks and send notifications
+    deadline_notifications:
+      schedule: "0 9 * * *"          # Every day at 09:00 AM
+      enabled: true                  # Enable/disable this specific job
+      task: "check_deadlines"        # Method name in CronTaskManager to execute
+      description: "Check deadlines and send notifications"
+    
+    # Daily report - generate system activity report
+    daily_report:
+      schedule: "0 18 * * 1-5"       # Monday-Friday at 18:00 (6 PM)
+      enabled: true
+      task: "generate_daily_report"
+      description: "Generate daily activity report"
+    
+    # Cache cleanup - remove expired cache entries
+    cache_cleanup:
+      schedule: "0 3 * * *"          # Every day at 03:00 AM
+      enabled: true
+      task: "cleanup_cache"
+      description: "Clean up outdated cache entries"
+    
+    # LLM activity analysis - perform weekly AI analysis
+    weekly_analysis:
+      schedule: "0 10 * * 1"         # Every Monday at 10:00 AM
+      enabled: ${LLM_ENABLED:false}  # Environment variable substitution. Format: ${VAR_NAME:default_value}
+      task: "weekly_llm_analysis"
+      description: "Weekly AI activity analysis"
+    
+    # Telegram greetings - send greeting messages to bot users
+    telegram_greetings:
+      schedule: "*/5 * * * *"        # Every 5 minutes. Format: minute hour day month day_of_week
+      enabled: true
+      task: "send_telegram_greetings"
+      description: "Send greeting messages to Telegram bot users"
+    
+    # External systems synchronization
+    telegram_sync:
+      schedule: "*/15 * * * *"       # Every 15 minutes
+      enabled: true
+      task: "sync_telegram_status"
+      description: "Synchronize statuses with Telegram"
+
+# Scheduler settings
+# Cron schedule format: "minute hour day month day_of_week"
+# 
+# Time fields:
+# - minute: 0-59 or */n for every n minutes
+# - hour: 0-23 or */n for every n hours
+# - day: 1-31
+# - month: 1-12 or JAN-DEC
+# - day_of_week: 0-6 (0=Sunday) or SUN-SAT
+#
+# Special characters:
+# - * (asterisk): any value
+# - , (comma): value list separator (e.g., "0,15,30,45")
+# - - (hyphen): range of values (e.g., "1-5" for Monday-Friday)
+# - / (slash): step values (e.g., "*/5" for every 5 minutes)
+# - ? (question mark): no specific value (day or day_of_week)
+#
+# Examples:
+#   "* * * * *"      - Every minute
+#   "0 * * * *"      - Every hour at minute 0
+#   "0 9 * * *"      - Every day at 9:00 AM
+#   "0 18 * * 1-5"   - Monday-Friday at 6:00 PM
+#   "*/15 * * * *"   - Every 15 minutes
+#   "0 10 * * 1"     - Every Monday at 10:00 AM
+#   "0 0 1 * *"      - First day of every month at midnight
+#   "@daily"         - Every day at midnight (shortcut)
+#   "@hourly"        - Every hour (shortcut)
+#   "@weekly"        - Every Sunday at midnight (shortcut)
+#   "@monthly"       - First day of month at midnight (shortcut)
+#   "@yearly"        - January 1 at midnight (shortcut)
+scheduler:
+  timezone: "Europe/Moscow"         # Timezone for scheduler. Options: UTC, Europe/Moscow, America/New_York, etc.
+  jobstore: "memory"                # Job storage type: "memory" (in-memory) or "sqlalchemy" (database)
+  thread_pool_size: 5               # Number of worker threads for job execution
+  misfire_grace_time: 600           # Seconds to wait before considering a job "misfired" (missed execution)
+  coalesce: true                    # Combine multiple pending executions of the same job into one
+  daemon: false                     # Run scheduler in background/daemon mode
+  max_instances: 3                  # Maximum concurrent instances of a job
+  
+# Telegram bot settings for cron greeting functionality
+telegram_cron:
+  # Greeting message template with variables:
+  # {username} - user's Telegram username
+  # {first_name} - user's first name
+  # {last_name} - user's last name
+  # {time} - current time (HH:MM:SS)
+  # {date} - current date (YYYY-MM-DD)
+  # {task_count} - total tasks in system (if available)
+  # {user_count} - active users count (if available)
+  greeting_message: |
+    Добрый день, {first_name}!
+    
+    Текущее время: {time}
+    Сегодняшняя дата: {date}
+    
+    Рекомендуем проверить и обновить статус задач, над которыми вы сейчас работаете.
+    Это поможет команде быть в курсе прогресса и своевременно вносить корректировки.
+    
+    Если есть вопросы или нужна помощь - просто напишите.
+    
+    Хорошего рабочего дня!
+  enabled: true                      # Enable/disable Telegram greeting functionality
+  send_on_startup: false            # Send greeting when bot starts (true/false)
+  max_users_per_batch: 50           # Maximum users to process in one batch (1-100)
+  delay_between_messages: 0.3       # Delay between sending messages in seconds (0.1-5.0)
+  skip_inactive_hours: true         # Skip sending during inactive hours (e.g., night)
+  inactive_hours_start: 22          # Start of inactive period (0-23)
+  inactive_hours_end: 8             # End of inactive period (0-23)
+  
+# Cron logging settings
+cron_logging:
+  level: "INFO"                     # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  # Log message format
+  file_path: "./logs/cron_tasks.log" # Path to cron log file
+  max_size_mb: 10                   # Maximum log file size in megabytes (1-100)
+  backup_count: 5                   # Number of backup log files to keep (1-10)
+  console_output: true              # Enable/disable console log output (true/false)
+  enable_rotation: true             # Enable/disable log file rotation (true/false)
+  
+# Cron monitoring and health check settings
+cron_monitoring:
+  health_check_enabled: true        # Enable/disable cron health monitoring (true/false)
+  health_check_interval: 300        # Health check interval in seconds (60-3600)
+  metrics_enabled: true             # Enable/disable metrics collection (true/false)
+  alert_on_failure: true            # Send alerts on job failures (true/false)
+  max_failures: 3                   # Maximum consecutive failures before alert (1-10)
+  alert_channels:                   # Alert notification channels
+    - log                           # Options: log, email, telegram, slack
+  failure_timeout: 3600             # Consider job failed if not completed within X seconds
+  
+# Cron performance and reliability settings
+cron_performance:
+  job_timeout_seconds: 300          # Maximum job execution time in seconds (30-3600)
+  retry_on_failure: true            # Enable/disable automatic retry on failure (true/false)
+  max_retries: 3                    # Maximum retry attempts on failure (0-10, 0=no retry)
+  retry_delay: 60                   # Delay between retries in seconds (10-600)
+  parallel_execution: false         # Allow parallel execution of same job (true/false)
+  memory_limit_mb: 512              # Maximum memory usage per job in MB (64-2048)
+  cpu_limit_percent: 50             # Maximum CPU usage per job in percent (10-100)
+  
+# Environment variables configuration
+# Variables can be referenced in config using ${VAR_NAME:default_value} syntax
+# Examples:
+#   ${DATABASE_URL:postgresql://localhost/mydb}
+#   ${API_KEY:}
+#   ${LOG_LEVEL:INFO}
+#   ${DEBUG_MODE:false}
+#   ${TELEGRAM_BOT_TOKEN:}
+#   ${OPENAI_API_KEY:}
+#   ${LLM_ENABLED:false}
+#   ${REDIS_URL:redis://localhost:6379/0}
+#   ${EMAIL_SMTP_SERVER:smtp.gmail.com}
+#   ${EMAIL_PORT:587}
+environment:
+  required_variables:               # List of required environment variables
+    - TELEGRAM_BOT_TOKEN            # Telegram bot API token
+    - API_BASE_URL                  # Base URL for REST API
+  optional_variables:               # List of optional environment variables
+    - LLM_ENABLED                   # Enable/disable LLM features
+    - OPENAI_API_KEY                # OpenAI API key
+    - LOG_LEVEL                     # Application log level
+    - DEBUG                         # Debug mode flag
+  validation_enabled: true          # Enable/disable environment variable validation
+  
+# Cron job execution policies
+cron_policies:
+  execution_mode: "sequential"      # Job execution mode: "sequential" or "parallel"
+  priority_enabled: false           # Enable job priority system (true/false)
+  default_priority: 5               # Default job priority (1-10, 1=highest)
+  skip_if_late: false               # Skip job if it's too late to execute (true/false)
+  allow_overlap: false              # Allow overlapping executions of same job (true/false)
+  notification_on_complete: false   # Send notification on job completion (true/false)
+  
+# Cron job history and audit
+cron_history:
+  keep_history: true                # Keep job execution history (true/false)
+  history_days: 30                  # Number of days to keep history (1-365)
+  store_failures: true              # Store failed job execution details (true/false)
+  store_successes: true             # Store successful job execution details (true/false)
+  audit_enabled: true               # Enable audit logging for cron operations (true/false)
+  
+# Timezone configuration reference
+# Common timezone options:
+#   UTC
+#   Europe/Moscow
+#   Europe/London
+#   America/New_York
+#   America/Los_Angeles
+#   Asia/Tokyo
+#   Australia/Sydney
+#   Africa/Cairo
+#   Pacific/Auckland
+#   America/Sao_Paulo
+#   Asia/Kolkata
+#   Europe/Paris
+#   Asia/Shanghai
+#   Canada/Toronto
+#   Asia/Dubai
+# 
+# To see all available timezones, run in Python:
+#   import pytz
+#   print(pytz.all_timezones)
+# ====== end cron =========

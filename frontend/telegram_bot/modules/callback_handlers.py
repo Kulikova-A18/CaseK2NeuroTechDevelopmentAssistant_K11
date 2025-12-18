@@ -336,3 +336,312 @@ async def handle_analysis_period(callback: types.CallbackQuery):
             )
     
     await callback.answer("Анализ завершен")
+
+
+async def handle_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for task status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    user_id = query.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await query.answer("Вы не авторизованы. Используйте /login")
+        return
+    
+    data = query.data.split(":")
+    if len(data) != 3:
+        await query.answer("Ошибка данных")
+        return
+    
+    action, task_id, new_status = data
+    
+    if action != "change_status":
+        return
+    
+    async with APIClient() as api_client:
+        try:
+            update_data = {"status": new_status}
+            
+            response = await api_client.update_task(token, int(task_id), update_data)
+            
+            if response and 'error' not in response:
+                status_names = {
+                    "todo": "к выполнению",
+                    "in_progress": "в процессе",
+                    "in_review": "на проверке",
+                    "done": "завершено",
+                    "paused": "отложено",
+                    "cancelled": "отменено"
+                }
+                
+                status_display = status_names.get(new_status, new_status)
+                
+                await query.message.edit_text(
+                    f"Статус задачи #{task_id} успешно изменен на:\n"
+                    f"{status_display.upper()}\n\n"
+                    f"Используйте /tasks для просмотра обновленного списка задач.",
+                    reply_markup=None
+                )
+                
+                await query.answer(f"Статус изменен на {status_display}")
+                
+                logger.info(f"User {user_id} changed status of task #{task_id} to {new_status}")
+            else:
+                error_msg = response.get('error', 'Неизвестная ошибка')
+                await query.message.edit_text(
+                    f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                    f"{error_msg}\n\n"
+                    f"Попробуйте еще раз или обратитесь к администратору.",
+                    reply_markup=None
+                )
+                await query.answer("Ошибка при изменении статуса")
+                
+        except Exception as e:
+            logger.error(f"Error changing task status: {e}")
+            await query.message.edit_text(
+                f"Произошла ошибка при изменении статуса:\n"
+                f"{str(e)}\n\n"
+                f"Попробуйте еще раз позже.",
+                reply_markup=None
+            )
+            await query.answer("Произошла ошибка")
+
+async def handle_cancel_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for cancel status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    data = query.data.split(":")
+    if len(data) == 2 and data[0] == "cancel_status_change":
+        task_id = data[1]
+        await query.message.edit_text(
+            f"Изменение статуса задачи #{task_id} отменено.\n\n"
+            f"Возвращайтесь в главное меню.",
+            reply_markup=None
+        )
+        await query.answer("Изменение статуса отменено")
+
+async def handle_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for task status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    user_id = query.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await query.answer("Вы не авторизованы. Используйте /login")
+        return
+    
+    data = query.data.split(":")
+    if len(data) != 3:
+        await query.answer("Ошибка данных")
+        return
+    
+    action, task_id, new_status = data
+    
+    if action != "change_status":
+        return
+    
+    async with APIClient() as api_client:
+        try:
+            update_data = {"status": new_status}
+            
+            response = await api_client.update_task(token, int(task_id), update_data)
+            
+            if response and 'error' not in response:
+                status_names = {
+                    "todo": "к выполнению",
+                    "in_progress": "в процессе",
+                    "in_review": "на проверке",
+                    "done": "завершено",
+                    "paused": "отложено",
+                    "cancelled": "отменено"
+                }
+                
+                status_display = status_names.get(new_status, new_status)
+                
+                await query.message.edit_text(
+                    f"Статус задачи #{task_id} успешно изменен на:\n"
+                    f"{status_display.upper()}\n\n"
+                    f"Используйте /tasks для просмотра обновленного списка задач.",
+                    reply_markup=None
+                )
+                
+                await query.answer(f"Статус изменен на {status_display}")
+                
+                logger.info(f"User {user_id} changed status of task #{task_id} to {new_status}")
+            else:
+                error_msg = response.get('error', 'Неизвестная ошибка')
+                await query.message.edit_text(
+                    f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                    f"{error_msg}\n\n"
+                    f"Попробуйте еще раз или обратитесь к администратору.",
+                    reply_markup=None
+                )
+                await query.answer("Ошибка при изменении статуса")
+                
+        except Exception as e:
+            logger.error(f"Error changing task status: {e}")
+            await query.message.edit_text(
+                f"Произошла ошибка при изменении статуса:\n"
+                f"{str(e)}\n\n"
+                f"Попробуйте еще раз позже.",
+                reply_markup=None
+            )
+            await query.answer("Произошла ошибка")
+
+async def handle_cancel_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for cancel status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    data = query.data.split(":")
+    if len(data) == 2 and data[0] == "cancel_status_change":
+        task_id = data[1]
+        await query.message.edit_text(
+            f"Изменение статуса задачи #{task_id} отменено.\n\n"
+            f"Возвращайтесь в главное меню.",
+            reply_markup=None
+        )
+        await query.answer("Изменение статуса отменено")
+
+async def handle_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for task status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    user_id = query.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await query.answer("Вы не авторизованы. Используйте /login")
+        return
+    
+    data = query.data.split(":")
+    if len(data) != 3:
+        await query.answer("Ошибка данных")
+        return
+    
+    action, task_id, new_status = data
+    
+    if action != "change_status":
+        return
+    
+    async with APIClient() as api_client:
+        try:
+            update_data = {"status": new_status}
+            
+            response = await api_client.update_task(token, int(task_id), update_data)
+            
+            if response and 'error' not in response:
+                status_names = {
+                    "todo": "к выполнению",
+                    "in_progress": "в процессе",
+                    "in_review": "на проверке",
+                    "done": "завершено",
+                    "paused": "отложено",
+                    "cancelled": "отменено"
+                }
+                
+                status_display = status_names.get(new_status, new_status)
+                
+                await query.message.edit_text(
+                    f"Статус задачи #{task_id} успешно изменен на:\n"
+                    f"{status_display.upper()}\n\n"
+                    f"Используйте /tasks для просмотра обновленного списка задач.",
+                    reply_markup=None
+                )
+                
+                await query.answer(f"Статус изменен на {status_display}")
+                
+                logger.info(f"User {user_id} changed status of task #{task_id} to {new_status}")
+            else:
+                error_msg = response.get('error', 'Неизвестная ошибка')
+                await query.message.edit_text(
+                    f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                    f"{error_msg}\n\n"
+                    f"Попробуйте еще раз или обратитесь к администратору.",
+                    reply_markup=None
+                )
+                await query.answer("Ошибка при изменении статуса")
+                
+        except Exception as e:
+            logger.error(f"Error changing task status: {e}")
+            await query.message.edit_text(
+                f"Произошла ошибка при изменении статуса:\n"
+                f"{str(e)}\n\n"
+                f"Попробуйте еще раз позже.",
+                reply_markup=None
+            )
+            await query.answer("Произошла ошибка")
+
+async def handle_cancel_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for cancel status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    data = query.data.split(":")
+    if len(data) == 2 and data[0] == "cancel_status_change":
+        task_id = data[1]
+        await query.message.edit_text(
+            f"Изменение статуса задачи #{task_id} отменено.\n\n"
+            f"Возвращайтесь в главное меню.",
+            reply_markup=None
+        )
+        await query.answer("Изменение статуса отменено")
+
+
+@classmethod
+def get_task_detail_keyboard(cls, task_id):
+    """Клавиатура для детального просмотра задачи"""
+    builder = InlineKeyboardBuilder()
+    
+    builder.button(
+        text="Изменить статус",
+        callback_data=f"change_status_menu:{task_id}"
+    )
+    
+    builder.button(
+        text="Назад к списку",
+        callback_data="back_to_tasks_list"
+    )
+    
+    builder.button(
+        text="Главное меню",
+        callback_data="back_to_main_menu"
+    )
+    
+    builder.adjust(1)
+    return builder.as_markup()
+
+async def handle_change_status_menu_callback(query: types.CallbackQuery):
+    """
+    Handler for change status menu callback.
+    
+    @param query: CallbackQuery object
+    """
+    user_id = query.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await query.answer("Вы не авторизованы. Используйте /login")
+        return
+    
+    data = query.data.split(":")
+    if len(data) == 2 and data[0] == "change_status_menu":
+        task_id = data[1]
+        
+        await query.message.edit_text(
+            f"Выберите новый статус для задачи #{task_id}:",
+            reply_markup=Keyboards.get_task_status_keyboard(task_id)
+        )
+        await query.answer()

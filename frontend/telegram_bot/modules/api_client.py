@@ -129,19 +129,42 @@ class APIClient:
                 logger.error(f"Error creating task: {response.status}, {error_text}")
                 return None
     
-    async def update_task(self, token: str, task_id: int, update_data: Dict[str, Any]) -> bool:
+    async def update_task(self, token: str, task_id: int, update_data: dict) -> dict:
         """
-        Update task.
+        Update task by ID.
         
-        @param token: Authentication token
-        @param task_id: Task ID to update
+        @param token: Access token
+        @param task_id: Task ID
         @param update_data: Data to update
-        @return: True if successful, False otherwise
+        @return: Response dict with success/error info
         """
-        url = f"{self.base_url}/api/tasks/{task_id}"
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
         
-        async with self.session.put(url, json=update_data, headers=self._get_headers(token)) as response:
-            return response.status == 200
+        try:
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.put(
+                    f'{self.base_url}/api/tasks/{task_id}',
+                    json=update_data
+                ) as response:
+                    if response.status == 200:
+                        try:
+                            return await response.json()
+                        except:
+                            # Если ответ не в формате JSON, возвращаем успех
+                            return {'success': True, 'message': 'Task updated successfully'}
+                    else:
+                        error_text = await response.text()
+                        try:
+                            error_json = await response.json()
+                            return {'error': error_json.get('error', error_text)}
+                        except:
+                            return {'error': f'HTTP {response.status}: {error_text}'}
+        except Exception as e:
+            logger.error(f"Error updating task: {e}")
+            return {'error': str(e)}
     
     async def get_llm_analysis(self, token: str, analysis_params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -218,3 +241,31 @@ class APIClient:
         except aiohttp.ClientError as e:
             logger.error(f"API unavailable: {e}")
             return None
+        
+async def update_task(self, token: str, task_id: int, update_data: dict) -> dict:
+    """
+    Update task by ID.
+    
+    @param token: Access token
+    @param task_id: Task ID
+    @param update_data: Data to update
+    @return: Response dict
+    """
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.put(
+                f'{self.base_url}/api/tasks/{task_id}',
+                json=update_data
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    error_text = await response.text()
+                    return {'error': f'HTTP {response.status}: {error_text}'}
+    except Exception as e:
+        return {'error': str(e)}

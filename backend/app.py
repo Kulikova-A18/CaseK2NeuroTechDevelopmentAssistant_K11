@@ -135,7 +135,8 @@ def get_tasks():
     return tasks_api.get_tasks_endpoint()
 
 @app.route('/api/tasks', methods=['POST'])
-@require_permission('can_create_tasks', auth_manager)
+@require_auth(auth_manager)
+# @require_permission('can_create_tasks', auth_manager)
 @validate_request(TaskCreate)
 def create_task():
     return tasks_api.create_task_endpoint()
