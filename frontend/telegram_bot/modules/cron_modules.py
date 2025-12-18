@@ -122,7 +122,7 @@ class TelegramGreetingCron:
     def _check_task_configuration(self):
         """Check task configuration in config.yaml."""
         try:
-            if not self.cron_manager or not hasattr(self.cron_manager, 'config'):
+            if not self.cron_manager or not hasattr(self.cron_manager, 'config_tg'):
                 return
             
             jobs_config = self.cron_manager.config.get('cron', {}).get('jobs', {})
