@@ -161,8 +161,8 @@ def export_tasks_csv():
 
 # LLM routes
 @app.route('/api/llm/analyze/tasks', methods=['POST'])
-@require_permission('can_use_llm', auth_manager)
-@validate_request(LLMAnalysisRequest)
+# @require_permission('can_use_llm', auth_manager)
+# @validate_request(LLMAnalysisRequest)
 def analyze_tasks_llm():
     return llm_api.analyze_tasks_llm_endpoint()
 

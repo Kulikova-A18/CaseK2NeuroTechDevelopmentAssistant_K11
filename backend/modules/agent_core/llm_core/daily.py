@@ -1,16 +1,16 @@
 from typing import Dict, Any
 
-from llm_core.prompts import (
+from modules.agent_core.llm_core.prompts import (
     DAILY_SYSTEM_PROMPT,
     DAILY_CLARIFICATION_SYSTEM_PROMPT,
 )
-from llm_core.schemas import DailyReport
-from llm_core.utils.builders import (
+from modules.agent_core.llm_core.schemas import DailyReport
+from modules.agent_core.llm_core.utils.builders import (
     build_daily_initial_prompt,
     build_daily_clarification_prompt,
 )
-from llm_core.utils.llm_json import call_llm_json, LLMJsonError
-from llm_core.utils.validators import validate_daily_json, ValidationError
+from modules.agent_core.llm_core.utils.llm_json import call_llm_json, LLMJsonError
+from modules.agent_core.llm_core.utils.validators import validate_daily_json, ValidationError
 
 
 # Используется agent_core для маршрутизации

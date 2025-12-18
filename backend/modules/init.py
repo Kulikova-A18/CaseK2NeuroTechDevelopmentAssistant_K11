@@ -11,6 +11,15 @@ from modules.auth_manager import AuthManager
 from modules.decorators import *
 from modules.file_hash_manager import *
 
+from modules.agent_core.llm_core.agent_process import *
+from modules.agent_core.llm_core.analytics import *
+from modules.agent_core.llm_core.blockers import *
+from modules.agent_core.llm_core.daily import *
+from modules.agent_core.llm_core.digest import *
+from modules.agent_core.llm_core.faq import *
+from modules.agent_core.llm_core.prompts import *
+from modules.agent_core.llm_core.schemas import *
+
 # Initialize globals (will be set by app.py)
 config_manager = None
 users_manager = None

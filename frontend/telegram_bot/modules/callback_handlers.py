@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from aiogram import types, F
 from aiogram.fsm.context import FSMContext
+from aiogram.types import BufferedInputFile, FSInputFile
 from modules.api_client import APIClient
 from modules.session_manager import user_sessions
 from modules.keyboards import Keyboards
@@ -271,12 +272,13 @@ async def handle_task_filters(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=Keyboards.get_task_filters_keyboard()
     )
 
+import os
+import tempfile
+from datetime import datetime
 
 async def handle_analysis_period(callback: types.CallbackQuery):
     """
-    Handler for analysis period selection callback.
-    
-    @param callback: CallbackQuery object
+    Упрощенный вариант без структурирования данных
     """
     user_id = callback.from_user.id
     token = user_sessions.get_token(user_id)
@@ -308,35 +310,54 @@ async def handle_analysis_period(callback: types.CallbackQuery):
         analysis_result = await api_client.get_llm_analysis(token, analysis_params)
         
         if analysis_result:
-            summary = analysis_result.get('analysis', {}).get('summary', {})
-            recommendations = analysis_result.get('recommendations', [])
+            # Формируем текст отчета
+            report_text = str(analysis_result)
             
-            analysis_text = (
-                f"AI Анализ задач ({period_display})\n\n"
-                f"Общая статистика:\n"
-                f"- Всего задач: {summary.get('total_tasks', 0)}\n"
-                f"- Выполнено: {summary.get('completed', 0)}\n"
-                f"- В работе: {summary.get('in_progress', 0)}\n"
-                f"- Просрочено: {summary.get('overdue', 0)}\n"
-                f"- Процент выполнения: {summary.get('completion_rate', '0%')}\n\n"
-            )
-            
-            if recommendations:
-                analysis_text += "Рекомендации:\n"
-                for i, rec in enumerate(recommendations[:5], 1):
-                    analysis_text += f"{i}. {rec}\n"
-            
-            await callback.message.edit_text(
-                analysis_text,
-            )
-        else:
-            await callback.message.edit_text(
-                "Ошибка анализа\n\n"
-                "Не удалось получить анализ задач. Попробуйте позже.",
-            )
-    
-    await callback.answer("Анализ завершен")
+            # Создаем временный файл
+            temp_file = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.txt', delete=False)
+            with temp_file:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                content = f"""АНАЛИЗ ЗАДАЧ
+Период: {period_display}
+Дата: {timestamp}
+{'='*50}
 
+{report_text}
+"""
+                temp_file.write(content)
+            
+            temp_file_path = temp_file.name
+            
+            try:
+                # Читаем файл и создаем BufferedInputFile
+                with open(temp_file_path, 'rb') as f:
+                    file_data = f.read()
+                
+                filename = f"анализ_{period_display}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+                input_file = BufferedInputFile(file_data, filename=filename)
+                
+                # Отправляем файл
+                await callback.bot.send_document(
+                    chat_id=callback.message.chat.id,
+                    document=input_file,
+                    caption=f"Анализ задач за {period_display}"
+                )
+                
+                # Удаляем старое сообщение
+                await callback.message.delete()
+                
+            except Exception as e:
+                logger.error(f"Ошибка: {e}")
+                await callback.message.edit_text(f"Ошибка: {e}")
+            finally:
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+            
+            await callback.answer()
+            
+        else:
+            await callback.message.edit_text("Ошибка при получении анализа")
+            await callback.answer("Ошибка")
 
 async def handle_status_change_callback(query: types.CallbackQuery):
     """
