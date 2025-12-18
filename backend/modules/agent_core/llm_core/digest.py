@@ -1,8 +1,8 @@
 from typing import Dict, Any, List
 
-from llm_core.prompts import PERSONAL_DIGEST_SYSTEM_PROMPT
-from llm_core.utils.builders import build_personal_digest_prompt
-from llm_core.utils.llm_text import call_llm_text, LLMTextError
+from modules.agent_core.llm_core.prompts import PERSONAL_DIGEST_SYSTEM_PROMPT
+from modules.agent_core.llm_core.utils.builders import build_personal_digest_prompt
+from modules.agent_core.llm_core.utils.llm_text import call_llm_text, LLMTextError
 
 
 def handle_personal_digest(

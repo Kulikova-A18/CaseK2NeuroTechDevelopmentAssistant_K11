@@ -1,13 +1,82 @@
-# 1. Быстрый запуск примеров (без параметров):
-# python
-# from agent_module import run_examples
-#
-# run_examples()
+# modules/agent_core/agent_module.py
+
+# Как использовать:
+# # Простой пример использования
+# from modules.agent_core.agent_module import create_agent
+
+# # Создаем агента
+# agent = create_agent()
+
+# # Получаем задачи из CSV в формате JSON
+# tasks_json = agent.get_tasks_json()
+
+# # Печатаем результат
+# print(json.dumps(tasks_json, ensure_ascii=False, indent=2))
+
+# # Закрываем соединение
+# agent.close()
+
+# # Или используем контекстный менеджер
+# with create_agent() as agent:
+#     tasks_json = agent.get_tasks_json()
+#     print(f"Всего задач: {tasks_json['total_tasks']}")
+#     print(f"В работе: {tasks_json['summary']['in_progress']}")
+# Что было изменено:
+# Добавлен параметр tasks_file_path в конструктор класса для указания пути к CSV файлу
+
+# Добавлен метод _read_tasks_csv() для чтения и парсинга CSV файла
+
+# Добавлен метод _parse_tags() для корректной обработки тегов из CSV
+
+# Добавлен метод get_tasks_json() - единая функция, которая возвращает итоговый JSON с задачами и статистикой
+
+# Удалена функция run_examples() и примеры использования
+
+# Сохранились все оригинальные функции для работы с AI-агентом (process_daily_report, process_analytics и т.д.)
+
+# Формат возвращаемого JSON:
+# json
+# {
+#   "success": true,
+#   "total_tasks": 4,
+#   "tasks": [
+#     {
+#       "task_id": 101,
+#       "title": "Разработка REST API",
+#       "description": "Создать API endpoints для системы управления задачами",
+#       "status": "in_progress",
+#       "assignee": "@developer_alex",
+#       "creator": "@manager_anna",
+#       "created_at": "",
+#       "updated_at": "",
+#       "due_date": "",
+#       "completed_at": "",
+#       "priority": "high",
+#       "tags": ["backend", "api", "priority"]
+#     },
+#     ...
+#   ],
+#   "statistics": {
+#     "by_status": {"in_progress": 2, "done": 1, "todo": 1},
+#     "by_priority": {"high": 2, "urgent": 1, "medium": 1},
+#     "by_assignee": {"@developer_alex": 3, "не назначен": 1}
+#   },
+#   "summary": {
+#     "in_progress": 2,
+#     "todo": 1,
+#     "done": 1,
+#     "high_priority": 3,
+#     "without_assignee": 1
+#   }
+# }
 
 import httpx
-from typing import Dict, Any, Optional, Tuple
-from llm_core.agent_process import agent_process
-from llm_core.blockers import process_blockers
+import csv
+import json
+from pathlib import Path
+from typing import Dict, Any, Optional, Tuple, List
+from modules.agent_core.llm_core.agent_process import agent_process
+from modules.agent_core.llm_core.blockers import process_blockers
 
 class AgentModule:
     """Модуль для работы с AI-агентом для daily-отчетов и аналитики"""
@@ -17,7 +86,8 @@ class AgentModule:
         api_key: str = "38w68Yk1th",
         model: str = "Qwen/Qwen3-8B",
         api_url: str = "https://qwen3-8b.product.nova.neurotech.k2.cloud/v1/chat/completions",
-        timeout_config: Optional[Dict[str, float]] = None
+        timeout_config: Optional[Dict[str, float]] = None,
+        tasks_file_path: str = "data/tasks.csv"
     ):
         """
         Инициализация модуля агента
@@ -27,10 +97,12 @@ class AgentModule:
             model: Название модели
             api_url: URL API эндпоинта
             timeout_config: Конфигурация таймаутов (connect, read, write, pool)
+            tasks_file_path: Путь к файлу с задачами
         """
         self.api_key = api_key
         self.model = model
         self.api_url = api_url
+        self.tasks_file_path = Path(tasks_file_path)
 
         # Конфигурация таймаутов по умолчанию
         default_timeout = {
@@ -48,6 +120,123 @@ class AgentModule:
             timeout=httpx.Timeout(**default_timeout),
             verify=False  # ВАЖНО: отключение SSL проверки
         )
+
+    def _parse_tags(self, tags_str: str) -> List[str]:
+        """
+        Парсит строку с тегами из CSV
+        
+        Args:
+            tags_str: Строка с тегами
+            
+        Returns:
+            Список тегов
+        """
+        if not tags_str or tags_str.strip() == '':
+            return []
+        
+        try:
+            # Очищаем строку от лишних кавычек и преобразуем в список
+            clean_str = tags_str.strip()
+            if clean_str.startswith('[') and clean_str.endswith(']'):
+                clean_str = clean_str[1:-1]
+            
+            # Разделяем по запятым и убираем кавычки
+            tags = [tag.strip().replace('"', '').replace("'", "") 
+                   for tag in clean_str.split(',') if tag.strip()]
+            return tags
+        except Exception as e:
+            print(f"Ошибка при парсинге тегов '{tags_str}': {e}")
+            return []
+
+    def _read_tasks_csv(self) -> List[Dict[str, Any]]:
+        """
+        Читает задачи из CSV файла
+        
+        Returns:
+            Список задач в виде словарей
+        """
+        tasks = []
+        
+        if not self.tasks_file_path.exists():
+            print(f"Файл {self.tasks_file_path} не найден")
+            return tasks
+        
+        try:
+            with open(self.tasks_file_path, 'r', encoding='utf-8') as file:
+                csv_reader = csv.DictReader(file)
+                for row_num, row in enumerate(csv_reader, 1):
+                    try:
+                        # Обрабатываем каждую задачу
+                        task = {
+                            "task_id": int(row.get("task_id", 0)) if row.get("task_id") else 0,
+                            "title": row.get("title", ""),
+                            "description": row.get("description", ""),
+                            "status": row.get("status", ""),
+                            "assignee": row.get("assignee", ""),
+                            "creator": row.get("creator", ""),
+                            "created_at": row.get("created_at", ""),
+                            "updated_at": row.get("updated_at", ""),
+                            "due_date": row.get("due_date", ""),
+                            "completed_at": row.get("completed_at", ""),
+                            "priority": row.get("priority", ""),
+                            "tags": self._parse_tags(row.get("tags", ""))
+                        }
+                        tasks.append(task)
+                    except Exception as e:
+                        print(f"Ошибка при обработке строки {row_num}: {e}")
+                        continue
+        except Exception as e:
+            print(f"Ошибка при чтении файла {self.tasks_file_path}: {e}")
+        
+        return tasks
+
+    def get_tasks_json(self) -> Dict[str, Any]:
+        """
+        Читает задачи из CSV файла и возвращает их в формате JSON
+        
+        Returns:
+            Словарь с задачами и статистикой
+        """
+        tasks = self._read_tasks_csv()
+        
+        # Собираем статистику
+        status_stats = {}
+        priority_stats = {}
+        assignee_stats = {}
+        
+        for task in tasks:
+            # Статистика по статусам
+            status = task["status"] if task["status"] else "без статуса"
+            status_stats[status] = status_stats.get(status, 0) + 1
+            
+            # Статистика по приоритетам
+            priority = task["priority"] if task["priority"] else "без приоритета"
+            priority_stats[priority] = priority_stats.get(priority, 0) + 1
+            
+            # Статистика по исполнителям
+            assignee = task["assignee"] if task["assignee"] else "не назначен"
+            assignee_stats[assignee] = assignee_stats.get(assignee, 0) + 1
+        
+        # Создаем итоговый JSON
+        result = {
+            "success": True,
+            "total_tasks": len(tasks),
+            "tasks": tasks,
+            "statistics": {
+                "by_status": status_stats,
+                "by_priority": priority_stats,
+                "by_assignee": assignee_stats
+            },
+            "summary": {
+                "in_progress": status_stats.get("in_progress", 0),
+                "todo": status_stats.get("todo", 0),
+                "done": status_stats.get("done", 0),
+                "high_priority": priority_stats.get("high", 0) + priority_stats.get("urgent", 0),
+                "without_assignee": assignee_stats.get("не назначен", 0)
+            }
+        }
+        
+        return result
 
     def process_daily_report(
         self,
@@ -156,80 +345,6 @@ class AgentModule:
             model=self.model,
         )
 
-    def run_daily_example(self) -> None:
-        """Пример использования для daily-отчетов"""
-        print("=" * 50)
-        print("DAILY REPORT EXAMPLE")
-        print("=" * 50)
-
-        # Обработка daily-отчета
-        daily_resp = self.process_daily_report(
-            message=(
-                "Вчера доделал интеграцию платежей по TASK-12. "
-                "Сегодня начинаю TASK-15. "
-                "Есть блокер — жду доступы к тестовому стенду."
-            ),
-            role="DEV"
-        )
-
-        print("DAILY RESPONSE:")
-        print(daily_resp)
-        print()
-
-        # Обработка блокеров
-        known_tasks = {"TASK-12", "TASK-15"}
-        existing_blockers = set()
-
-        events, escalations = self.process_blockers_from_daily(
-            daily_response=daily_resp,
-            known_tasks=known_tasks,
-            existing_blockers=existing_blockers
-        )
-
-        print("BLOCKER EVENTS:")
-        for event in events:
-            print(f"  - {event}")
-        print()
-
-        print("ESCALATIONS:")
-        for escalation in escalations:
-            print(f"  - {escalation}")
-        print()
-
-    def run_analytics_example(self) -> None:
-        """Пример использования для аналитики"""
-        print("=" * 50)
-        print("ANALYTICS EXAMPLE")
-        print("=" * 50)
-
-        # Шаг 1 - Определение намерения
-        intent_resp = self.process_analytics(
-            message="Покажи общий статус спринта, но подробно, с прогнозом."
-        )
-
-        print("ANALYTICS INTENT:")
-        print(intent_resp)
-        print()
-
-        # Шаг 2 - Генерация отчета (если поддерживается)
-        if intent_resp.get("type") == "json":
-            metrics = {
-                "completed_tasks": 12,
-                "total_tasks": 20,
-                "velocity_trend": "down",
-                "blockers": 2,
-            }
-
-            report_resp = self.process_analytics(
-                message="Покажи общий статус спринта, но подробно, с прогнозом.",
-                metrics=metrics,
-                mode="REPORT"
-            )
-
-            print("ANALYTICS REPORT:")
-            print(report_resp)
-            print()
-
     def close(self) -> None:
         """Закрытие HTTP-клиента"""
         self.client.close()
@@ -243,33 +358,11 @@ class AgentModule:
         self.close()
 
 
-# Функция для быстрого запуска примеров без параметров
-def run_examples():
-    """
-    Запуск всех примеров использования модуля
-
-    Пример вызова:
-        from agent_module import run_examples
-        run_examples()
-    """
-    # Создаем экземпляр модуля
-    agent = AgentModule(api_key="YOUR_API_KEY_HERE")
-
-    try:
-        # Запускаем примеры
-        agent.run_daily_example()
-        agent.run_analytics_example()
-
-    finally:
-        # Закрываем клиент
-        agent.close()
-
-
-# Альтернативная функция для более простого использования
 def create_agent(
-    api_key: str = "YOUR_API_KEY_HERE",
+    api_key: str = "38w68Yk1th",
     model: str = "Qwen/Qwen3-8B",
-    api_url: str = "https://qwen3-8b.product.nova.neurotech.k2.cloud/v1/chat/completions"
+    api_url: str = "https://qwen3-8b.product.nova.neurotech.k2.cloud/v1/chat/completions",
+    tasks_file_path: str = "data/tasks.csv"
 ) -> AgentModule:
     """
     Создание и настройка агента
@@ -278,9 +371,14 @@ def create_agent(
         api_key: API ключ
         model: Модель
         api_url: URL API
+        tasks_file_path: Путь к файлу с задачами
 
     Returns:
         Экземпляр AgentModule
     """
-    return AgentModule(api_key=api_key, model=model, api_url=api_url)
-
+    return AgentModule(
+        api_key=api_key,
+        model=model,
+        api_url=api_url,
+        tasks_file_path=tasks_file_path
+    )

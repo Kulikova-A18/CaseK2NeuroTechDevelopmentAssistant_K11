@@ -1,16 +1,16 @@
 from typing import Dict, Any
 
-from llm_core.prompts import (
+from modules.agent_core.llm_core.prompts import (
     ANALYTICS_INTENT_SYSTEM_PROMPT,
     ANALYTICS_REPORT_SYSTEM_PROMPT,
 )
-from llm_core.utils.builders import (
+from modules.agent_core.llm_core.utils.builders import (
     build_analytics_intent_prompt,
     build_analytics_report_prompt,
 )
-from llm_core.utils.llm_json import call_llm_json, LLMJsonError
-from llm_core.utils.llm_text import call_llm_text, LLMTextError
-from llm_core.utils.validators import (
+from modules.agent_core.llm_core.utils.llm_json import call_llm_json, LLMJsonError
+from modules.agent_core.llm_core.utils.llm_text import call_llm_text, LLMTextError
+from modules.agent_core.llm_core.utils.validators import (
     validate_analytics_intent,
     ValidationError,
 )

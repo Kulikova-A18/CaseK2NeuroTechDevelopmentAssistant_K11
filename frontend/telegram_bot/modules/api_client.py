@@ -179,7 +179,7 @@ class APIClient:
         async with self.session.post(url, json=analysis_params, headers=self._get_headers(token)) as response:
             if response.status == 200:
                 result = await response.json()
-                return result.get('data', {})
+                return result
             else:
                 logger.error(f"Error getting analysis: {response.status}")
                 return None

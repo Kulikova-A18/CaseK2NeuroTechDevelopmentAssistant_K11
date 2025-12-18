@@ -1,8 +1,8 @@
 from typing import Optional
 
 from prompts import FAQ_ANSWER_SYSTEM_PROMPT
-from llm_core.utils.builders import build_faq_answer_prompt
-from llm_core.utils.llm_text import call_llm_text, LLMTextError
+from modules.agent_core.llm_core.utils.builders import build_faq_answer_prompt
+from modules.agent_core.llm_core.utils.llm_text import call_llm_text, LLMTextError
 
 
 

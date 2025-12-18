@@ -1,17 +1,17 @@
 from typing import Dict, Any
 
-from llm_core.daily import (
+from modules.agent_core.llm_core.daily import (
     handle_daily_initial,
     handle_daily_clarification,
 )
-from llm_core.analytics import (
+from modules.agent_core.llm_core.analytics import (
     handle_analytics_intent,
     handle_analytics_report,
 )
-from llm_core.digest import handle_personal_digest
-from llm_core.blockers import process_blockers
+from modules.agent_core.llm_core.digest import handle_personal_digest
+from modules.agent_core.llm_core.blockers import process_blockers
 
-from llm_core.utils.validators import ValidationError
+from modules.agent_core.llm_core.utils.validators import ValidationError
 
 MAX_QUALITY_RETRIES = 2
 

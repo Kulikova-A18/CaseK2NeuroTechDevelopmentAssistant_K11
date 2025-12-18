@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from aiogram import types, F
 from aiogram.fsm.context import FSMContext
+from aiogram.types import BufferedInputFile, FSInputFile
 from modules.api_client import APIClient
 from modules.session_manager import user_sessions
 from modules.keyboards import Keyboards
@@ -271,12 +272,207 @@ async def handle_task_filters(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=Keyboards.get_task_filters_keyboard()
     )
 
+import os
+import tempfile
+from datetime import datetime
+
+def format_analysis_data(data: dict, period_display: str) -> str:
+    """
+    Форматирует данные анализа в структурированный текстовый отчет.
+    
+    Args:
+        data: Словарь с данными анализа
+        period_display: Отображаемое название периода
+    
+    Returns:
+        Отформатированный текстовый отчет
+    """
+    try:
+        lines = []
+        
+        # Заголовок
+        lines.append("АНАЛИЗ ЗАДАЧ")
+        lines.append(f"Период: {period_display}")
+        lines.append("=" * 60)
+        lines.append("")
+        
+        # Проверяем структуру данных
+        if not isinstance(data, dict):
+            return "Неверный формат данных анализа"
+        
+        # Извлекаем основные данные
+        data_dict = data.get('data', {}) if 'data' in data else data
+        
+        # 1. ОБЩАЯ СТАТИСТИКА
+        lines.append("ОБЩАЯ СТАТИСТИКА")
+        lines.append("-" * 40)
+        
+        summary = data_dict.get('analysis', {}).get('summary', {}) if 'analysis' in data_dict else data_dict.get('summary', {})
+        if summary:
+            lines.append(f"Всего задач: {summary.get('total_tasks', 'Н/Д')}")
+            lines.append(f"Выполнено: {summary.get('completed', 'Н/Д')}")
+            lines.append(f"В процессе: {summary.get('in_progress', 'Н/Д')}")
+            lines.append(f"К выполнению: {summary.get('todo', 'Н/Д')}")
+            lines.append(f"Просрочено: {summary.get('overdue', 'Н/Д')}")
+            lines.append(f"Процент выполнения: {summary.get('completion_rate', 'Н/Д')}")
+            lines.append(f"Среднее время выполнения: {summary.get('avg_completion_time', 'Н/Д')}")
+        else:
+            lines.append("Данные статистики отсутствуют")
+        lines.append("")
+        
+        # 2. МЕТРИКИ ПРОДУКТИВНОСТИ
+        lines.append("МЕТРИКИ ПРОДУКТИВНОСТИ")
+        lines.append("-" * 40)
+        
+        productivity = data_dict.get('analysis', {}).get('productivity_metrics', {}) if 'analysis' in data_dict else data_dict.get('productivity_metrics', {})
+        if productivity:
+            team_score = productivity.get('team_productivity_score')
+            if team_score:
+                lines.append(f"Оценка продуктивности команды: {team_score}")
+            
+            # Топ-исполнители
+            top_performers = productivity.get('top_performers', [])
+            if top_performers:
+                lines.append("Топ-исполнители:")
+                for i, performer in enumerate(top_performers[:5], 1):
+                    username = performer.get('username', 'Неизвестный')
+                    tasks = performer.get('tasks_completed', 'Н/Д')
+                    rate = performer.get('completion_rate', 'Н/Д')
+                    lines.append(f"  {i}. {username}: {tasks} задач ({rate})")
+            else:
+                lines.append("Топ-исполнители: данные отсутствуют")
+            
+            # Тренд выполнения
+            daily_trend = productivity.get('daily_completion_trend', [])
+            if daily_trend:
+                lines.append(f"Тренд выполнения (последние {len(daily_trend)} дней): {daily_trend}")
+        else:
+            lines.append("Данные продуктивности отсутствуют")
+        lines.append("")
+        
+        # 3. УЗКИЕ МЕСТА (BOTTLENECKS)
+        lines.append("УЗКИЕ МЕСТА")
+        lines.append("-" * 40)
+        
+        bottlenecks = data_dict.get('analysis', {}).get('bottlenecks', []) if 'analysis' in data_dict else data_dict.get('bottlenecks', [])
+        if bottlenecks:
+            for i, bottleneck in enumerate(bottlenecks, 1):
+                area = bottleneck.get('area', 'Неизвестная область')
+                impact = bottleneck.get('impact', 'Н/Д')
+                recommendation = bottleneck.get('recommendation', 'Рекомендации отсутствуют')
+                
+                lines.append(f"{i}. {area.upper()} (Влияние: {impact})")
+                lines.append(f"   Рекомендация: {recommendation}")
+                
+                affected_tasks = bottleneck.get('affected_tasks', [])
+                if affected_tasks and len(affected_tasks) > 0:
+                    # Показываем только первые 5 задач, чтобы не перегружать
+                    task_list = affected_tasks[:5]
+                    task_str = ', '.join(map(str, task_list))
+                    if len(affected_tasks) > 5:
+                        task_str += f" ... и еще {len(affected_tasks) - 5} задач"
+                    lines.append(f"   Затронутые задачи: {task_str}")
+                lines.append("")
+        else:
+            lines.append("Узкие места не обнаружены")
+            lines.append("")
+        
+        # 4. ПРОИЗВОДИТЕЛЬНОСТЬ КОМАНДЫ
+        lines.append("ПРОИЗВОДИТЕЛЬНОСТЬ КОМАНДЫ")
+        lines.append("-" * 40)
+        
+        team_performance = data_dict.get('analysis', {}).get('team_performance', {}) if 'analysis' in data_dict else data_dict.get('team_performance', {})
+        if team_performance:
+            collab_score = team_performance.get('collaboration_score')
+            if collab_score:
+                lines.append(f"Оценка сотрудничества: {collab_score}/10")
+            
+            # Распределение нагрузки
+            workload = team_performance.get('workload_distribution', {})
+            if workload:
+                lines.append("Распределение задач:")
+                # Сортируем по количеству задач (по убыванию)
+                sorted_workload = sorted(workload.items(), key=lambda x: x[1] if isinstance(x[1], (int, float)) else 0, reverse=True)
+                for user, task_count in sorted_workload[:10]:  # Показываем топ-10
+                    lines.append(f"  • {user}: {task_count} задач")
+                
+                if len(sorted_workload) > 10:
+                    lines.append(f"  ... и еще {len(sorted_workload) - 10} участников")
+            
+            # Рекомендации по настройке
+            adjustments = team_performance.get('suggested_adjustments', [])
+            if adjustments:
+                lines.append("Рекомендации по улучшению:")
+                for adj in adjustments:
+                    lines.append(f"  • {adj}")
+        else:
+            lines.append("Данные по команде отсутствуют")
+        lines.append("")
+        
+        # 5. ПРОГНОЗЫ
+        lines.append("ПРОГНОЗЫ")
+        lines.append("-" * 40)
+        
+        predictions = data_dict.get('predictions', {})
+        if predictions:
+            next_week = predictions.get('next_week_completion')
+            if next_week:
+                lines.append(f"Ожидаемое выполнение на следующей неделе: {next_week}")
+            
+            potential_bottlenecks = predictions.get('potential_bottlenecks', [])
+            if potential_bottlenecks:
+                lines.append(f"Потенциальные узкие места: {', '.join(potential_bottlenecks)}")
+            
+            suggested_actions = predictions.get('suggested_actions', [])
+            if suggested_actions:
+                lines.append("Рекомендуемые действия:")
+                for action in suggested_actions:
+                    lines.append(f"  • {action}")
+        else:
+            lines.append("Прогнозы отсутствуют")
+        lines.append("")
+        
+        # 6. РЕКОМЕНДАЦИИ
+        lines.append("РЕКОМЕНДАЦИИ")
+        lines.append("-" * 40)
+        
+        recommendations = data_dict.get('recommendations', [])
+        if recommendations:
+            for i, rec in enumerate(recommendations, 1):
+                lines.append(f"{i}. {rec}")
+        else:
+            lines.append("Рекомендации отсутствуют")
+        lines.append("")
+        
+        # 7. МЕТАДАННЫЕ (если есть)
+        meta = data_dict.get('meta', {}) if 'meta' in data_dict else data.get('meta', {})
+        if meta:
+            lines.append("МЕТАДАННЫЕ АНАЛИЗА")
+            lines.append("-" * 40)
+            
+            tasks_analyzed = meta.get('tasks_analyzed')
+            if tasks_analyzed:
+                lines.append(f"Проанализировано задач: {tasks_analyzed}")
+            
+            data_source = meta.get('data_source')
+            if data_source:
+                lines.append(f"Источник данных: {data_source}")
+            
+            generated_at = data_dict.get('generated_at') or meta.get('timestamp')
+            if generated_at:
+                lines.append(f"Дата генерации: {generated_at}")
+        
+        return "\n".join(lines)
+        
+    except Exception as e:
+        logger.error(f"Ошибка при форматировании данных анализа: {e}")
+        # Возвращаем сырые данные в случае ошибки
+        return f"Ошибка при обработке данных:\n\n{str(data)[:2000]}"
+
 
 async def handle_analysis_period(callback: types.CallbackQuery):
     """
-    Handler for analysis period selection callback.
-    
-    @param callback: CallbackQuery object
+    Обработчик выбора периода анализа с созданием структурированного отчета.
     """
     user_id = callback.from_user.id
     token = user_sessions.get_token(user_id)
@@ -308,35 +504,84 @@ async def handle_analysis_period(callback: types.CallbackQuery):
         analysis_result = await api_client.get_llm_analysis(token, analysis_params)
         
         if analysis_result:
-            summary = analysis_result.get('analysis', {}).get('summary', {})
-            recommendations = analysis_result.get('recommendations', [])
+            # Формируем структурированный отчет
+            report_text = format_analysis_data(analysis_result, period_display)
             
-            analysis_text = (
-                f"AI Анализ задач ({period_display})\n\n"
-                f"Общая статистика:\n"
-                f"- Всего задач: {summary.get('total_tasks', 0)}\n"
-                f"- Выполнено: {summary.get('completed', 0)}\n"
-                f"- В работе: {summary.get('in_progress', 0)}\n"
-                f"- Просрочено: {summary.get('overdue', 0)}\n"
-                f"- Процент выполнения: {summary.get('completion_rate', '0%')}\n\n"
+            # Добавляем заголовок и мета-информацию
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            full_report = f"""Анализ задач
+Период: {period_display}
+Сгенерировано: {timestamp}
+ID отчета: {analysis_result.get('data', {}).get('report_id', 'N/A') if isinstance(analysis_result, dict) else 'N/A'}
+
+{'='*60}
+
+{report_text}
+
+{'='*60}
+© Система анализа задач
+"""
+            
+            # Создаем временный файл
+            temp_file = tempfile.NamedTemporaryFile(
+                mode='w', 
+                encoding='utf-8', 
+                suffix='.txt', 
+                delete=False,
+                prefix=f'analysis_{period}_'
             )
             
-            if recommendations:
-                analysis_text += "Рекомендации:\n"
-                for i, rec in enumerate(recommendations[:5], 1):
-                    analysis_text += f"{i}. {rec}\n"
+            with temp_file:
+                temp_file.write(full_report)
             
-            await callback.message.edit_text(
-                analysis_text,
-            )
+            temp_file_path = temp_file.name
+            
+            try:
+                # Читаем файл и создаем BufferedInputFile
+                with open(temp_file_path, 'rb') as f:
+                    file_data = f.read()
+                
+                # Формируем имя файла
+                date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"анализ_задач_{period}_{date_str}.txt"
+                
+                # Создаем и отправляем файл
+                input_file = BufferedInputFile(file_data, filename=filename)
+                
+                await callback.bot.send_document(
+                    chat_id=callback.message.chat.id,
+                    document=input_file,
+                    caption=f"Анализ задач за {period_display}\nФайл готов к скачиванию"
+                )
+                
+                # Удаляем сообщение с "Запрашиваю анализ у AI..."
+                await callback.message.delete()
+                
+            except Exception as e:
+                logger.error(f"Ошибка при отправке файла: {e}")
+                
+                # Если файл не отправился, показываем первые 4000 символов текста
+                preview_text = full_report[:4000]
+                if len(full_report) > 4000:
+                    preview_text += "\n\n... [текст обрезан, скачайте файл для полной версии]"
+                
+                await callback.message.edit_text(
+                    f"Анализ задач за {period_display}\n\n{preview_text}"
+                )
+                
+            finally:
+                # Удаляем временный файл
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+            
+            await callback.answer("Отчет готов")
+            
         else:
             await callback.message.edit_text(
                 "Ошибка анализа\n\n"
-                "Не удалось получить анализ задач. Попробуйте позже.",
+                "Не удалось получить данные анализа. Попробуйте позже."
             )
-    
-    await callback.answer("Анализ завершен")
-
+            await callback.answer("Ошибка")
 
 async def handle_status_change_callback(query: types.CallbackQuery):
     """
