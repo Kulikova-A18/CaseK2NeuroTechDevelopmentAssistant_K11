@@ -119,7 +119,7 @@ server:
   request_timeout: 30
   cors_origins:
     - https://kanban.example.com
-    - http://localhost:3000
+    - http://193.233.171.205:3000
   debug: false
 
 # Export settings
