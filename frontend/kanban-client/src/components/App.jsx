@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 // Конфигурация API
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://backend:5000' || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://backend:5000' || 'http://backend:5000';
 
 // Конфигурация axios
 const api = axios.create({

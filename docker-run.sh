@@ -80,8 +80,8 @@ case $ACTION in
         echo -e "\n=== Service verification ==="
         
         # Backend check
-        if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 | grep -q "200\|404"; then
-            echo "Backend available at http://localhost:5000"
+        if curl -s -o /dev/null -w "%{http_code}" http://backend:5000 | grep -q "200\|404"; then
+            echo "Backend available at http://backend:5000"
         else
             echo "Backend unavailable"
         fi
