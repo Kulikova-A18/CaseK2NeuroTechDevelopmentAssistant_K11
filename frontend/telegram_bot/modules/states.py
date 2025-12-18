@@ -15,6 +15,8 @@ class TaskStates(StatesGroup):
     waiting_for_task_id = State()
     waiting_for_update_field = State()
     waiting_for_update_value = State()
+    waiting_for_assignee = State()
+    waiting_for_deadline = State()
 
 
 class UserStates(StatesGroup):

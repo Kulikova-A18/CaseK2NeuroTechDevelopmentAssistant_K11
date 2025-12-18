@@ -10,11 +10,20 @@ from aiogram.fsm.context import FSMContext
 from modules.api_client import APIClient
 from modules.session_manager import user_sessions
 from modules.formatters import MessageFormatter
-from modules.keyboards import Keyboards
+from modules.keyboards import *
 from modules.states import TaskStates, AnalysisStates
 from modules.utils import load_and_show_tasks, convert_to_excel, csv_to_excel
 
+from aiogram.types import (
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    ReplyKeyboardMarkup, KeyboardButton,
+    ReplyKeyboardRemove
+)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+
 logger = logging.getLogger(__name__)
+
 
 
 async def cmd_start(message: types.Message, state: FSMContext):
@@ -35,7 +44,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
         f"Добро пожаловать в Task Manager Bot!\n\n"
         f"Я помогу вам управлять задачами вашей команды:\n"
         f"- Создавать и отслеживать задачи\n"
-        f"- Получать уведомления об изменениях\n"
+        f"- Получать уведомления об изменениями\n"
         f"- Анализировать продуктивность с помощью AI\n"
         f"- Экспортировать данные в CSV и Excel\n\n"
         f"Для начала работы используйте команду /login\n"
@@ -265,6 +274,391 @@ async def cmd_new_task(message: types.Message, state: FSMContext):
     )
 
 
+async def process_task_title(message: types.Message, state: FSMContext):
+    """
+    Handler for receiving task title.
+    
+    @param message: Message object
+    @param state: FSM context
+    """
+    user_id = message.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await state.clear()
+        await message.answer(
+            "Вы не авторизованы\n\n"
+            "Используйте команду /login для входа в систему.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Проверка на команду отмены
+    if message.text.lower() in ["/cancel", "отмена", "cancel"]:
+        await state.clear()
+        await message.answer(
+            "Создание задачи отменено",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Save title to state
+    title = message.text
+    await state.update_data(title=title)
+    
+    # Move to next state
+    await state.set_state(TaskStates.waiting_for_description)
+    await message.answer(
+        f"Заголовок сохранен: {title}\n\n"
+        "Введите описание задачи (или напишите 'пропустить', чтобы оставить пустым):",
+        reply_markup=Keyboards.get_cancel_keyboard()
+    )
+    
+
+async def process_task_description(message: types.Message, state: FSMContext):
+    """
+    Handler for receiving task description.
+    
+    @param message: Message object
+    @param state: FSM context
+    """
+    user_id = message.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await state.clear()
+        await message.answer(
+            "Вы не авторизованы\n\n"
+            "Используйте команду /login для входа в систему.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    if message.text.lower() in ["/cancel", "отмена", "cancel"]:
+        await state.clear()
+        await message.answer(
+            "Создание задачи отменено",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    description = message.text
+    await state.update_data(description=description)
+    
+    data = await state.get_data()
+    title = data.get('title', '')
+    description = data.get('description', '')
+    
+    try:
+        async with APIClient() as api_client:
+            task_data = {
+                'title': title,
+                'description': description,
+                'status': 'todo'
+            }
+            
+            response = await api_client.create_task(token, task_data)
+
+            await message.answer(
+                "Задача успешно создана!",
+                reply_markup=Keyboards.get_main_menu()
+            )
+    
+    except Exception as e:
+        logger.error(f"Error creating task: {e}")
+        await message.answer(
+            "Не удалось создать задачу. Попробуйте еще раз.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+    
+    finally:
+        await state.clear()
+
+
+async def cmd_change_task_status(message: types.Message, state: FSMContext):
+    """
+    Handler for changing task status.
+    
+    @param message: Message object
+    @param state: FSM context
+    """
+    user_id = message.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    logger.info(f"Change task status request from user {user_id}, token found: {token is not None}")
+    
+    if not token:
+        await message.answer(
+            "Вы не авторизованы\n\n"
+            "Используйте команду /login для входа в систему.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Запрашиваем ID задачи
+    await state.set_state(TaskStates.waiting_for_task_id)
+    await message.answer(
+        "Изменение статуса задачи\n\n"
+        "Введите ID задачи, статус которой хотите изменить:",
+        reply_markup=Keyboards.get_cancel_keyboard()
+    )
+
+async def process_task_id_for_status(message: types.Message, state: FSMContext):
+    """
+    Handler for receiving task ID for status change.
+    
+    @param message: Message object
+    @param state: FSM context
+    """
+    user_id = message.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await state.clear()
+        await message.answer(
+            "Вы не авторизованы\n\n"
+            "Используйте команду /login для входа в систему.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Проверка на команду отмены
+    if message.text.lower() in ["/cancel", "отмена", "cancel"]:
+        await state.clear()
+        await message.answer(
+            "Изменение статуса отменено",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Проверяем, что введен номер
+    try:
+        task_id = int(message.text)
+    except ValueError:
+        await message.answer(
+            "Пожалуйста, введите корректный ID задачи (число).",
+            reply_markup=Keyboards.get_cancel_keyboard()
+        )
+        return
+    
+    # Проверяем существование задачи
+    async with APIClient() as api_client:
+        tasks_response = await api_client.get_tasks(token, {})
+        
+        if not tasks_response:
+            await state.clear()
+            await message.answer(
+                "Не удалось получить список задач.\n"
+                "Попробуйте позже или обратитесь к администратору.",
+                reply_markup=Keyboards.get_main_menu()
+            )
+            return
+        
+        # FIX: Проверяем тип ответа
+        if isinstance(tasks_response, dict):
+            # Это словарь с ключом 'tasks'
+            if 'error' in tasks_response:
+                error_msg = tasks_response.get('error', 'Неизвестная ошибка')
+                await state.clear()
+                await message.answer(
+                    f"Ошибка при получении задач: {error_msg}\n"
+                    "Попробуйте позже или обратитесь к администратору.",
+                    reply_markup=Keyboards.get_main_menu()
+                )
+                return
+            tasks = tasks_response.get('tasks', [])
+        elif isinstance(tasks_response, list):
+            # Это уже список задач
+            tasks = tasks_response
+        else:
+            # Неизвестный формат ответа
+            await state.clear()
+            await message.answer(
+                "Неверный формат ответа от сервера.\n"
+                "Попробуйте позже или обратитесь к администратору.",
+                reply_markup=Keyboards.get_main_menu()
+            )
+            return
+        
+        # Ищем задачу по ID
+        task_exists = False
+        for task in tasks:
+            # Преобразуем task_id из задачи в строку для сравнения
+            task_task_id = str(task.get('task_id', ''))
+            if task_task_id == str(task_id):
+                task_exists = True
+                break
+    
+    if not task_exists:
+        await state.clear()
+        await message.answer(
+            f"Задача с ID {task_id} не найдена.\n"
+            "Проверьте правильность ID и попробуйте еще раз.",
+            reply_markup=Keyboards.get_main_menu()
+        )
+        return
+    
+    # Показываем клавиатуру выбора статуса
+    await state.clear()
+    await message.answer(
+        f"Выберите новый статус для задачи #{task_id}:",
+        reply_markup=Keyboards.get_task_status_keyboard(task_id)
+    )
+async def handle_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for task status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    user_id = query.from_user.id
+    token = user_sessions.get_token(user_id)
+    
+    if not token:
+        await query.answer("Вы не авторизованы. Используйте /login")
+        return
+    
+    # Разбираем callback_data
+    data = query.data.split(":")
+    if len(data) != 3:
+        await query.answer("Ошибка данных")
+        return
+    
+    action, task_id, new_status = data
+    
+    if action != "change_status":
+        return
+    
+    # Обновляем статус задачи
+    async with APIClient() as api_client:
+        try:
+            # Подготавливаем данные для обновления
+            update_data = {"status": new_status}
+            
+            # Отправляем запрос на обновление
+            response = await api_client.update_task(token, int(task_id), update_data)
+            
+            # FIX: Проверяем тип response перед использованием
+            if not response:
+                # response is None or empty
+                await query.message.edit_text(
+                    f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                    f"Пустой ответ от сервера\n\n"
+                    f"Попробуйте еще раз или обратитесь к администратору.",
+                    reply_markup=None
+                )
+                await query.answer("Ошибка при изменении статуса")
+                return
+            
+            if isinstance(response, dict):
+                # Это словарь
+                if 'error' in response:
+                    error_msg = response.get('error', 'Неизвестная ошибка')
+                    await query.message.edit_text(
+                        f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                        f"{error_msg}\n\n"
+                        f"Попробуйте еще раз или обратитесь к администратору.",
+                        reply_markup=None
+                    )
+                    await query.answer("Ошибка при изменении статуса")
+                    return
+                else:
+                    # Успешный ответ в формате словаря
+                    # Получаем названия статусов для отображения
+                    status_names = {
+                        "todo": "к выполнению",
+                        "in_progress": "в процессе",
+                        "in_review": "на проверке",
+                        "done": "завершено",
+                        "paused": "отложено",
+                        "cancelled": "отменено"
+                    }
+                    
+                    status_display = status_names.get(new_status, new_status)
+                    
+                    await query.message.edit_text(
+                        f"Статус задачи #{task_id} успешно изменен на:\n"
+                        f"{status_display.upper()}\n\n"
+                        f"Используйте /tasks для просмотра обновленного списка задач.",
+                        reply_markup=None
+                    )
+                    
+                    # Отправляем подтверждение
+                    await query.answer(f"Статус изменен на {status_display}")
+                    
+                    # Логируем действие
+                    logger.info(f"User {user_id} changed status of task #{task_id} to {new_status}")
+                    return
+            
+            elif isinstance(response, bool):
+                # Это булево значение (например, True при успехе)
+                if response:
+                    status_names = {
+                        "todo": "к выполнению",
+                        "in_progress": "в процессе",
+                        "in_review": "на проверке",
+                        "done": "завершено",
+                        "paused": "отложено",
+                        "cancelled": "отменено"
+                    }
+                    
+                    status_display = status_names.get(new_status, new_status)
+                    
+                    await query.message.edit_text(
+                        f"Статус задачи #{task_id} успешно изменен на:\n"
+                        f"{status_display.upper()}\n\n"
+                        f"Используйте /tasks для просмотра обновленного списка задач.",
+                        reply_markup=None
+                    )
+                    
+                    await query.answer(f"Статус изменен на {status_display}")
+                    logger.info(f"User {user_id} changed status of task #{task_id} to {new_status}")
+                else:
+                    await query.message.edit_text(
+                        f"Ошибка при изменении статуса задачи #{task_id}:\n"
+                        f"Сервер вернул False\n\n"
+                        f"Попробуйте еще раз или обратитесь к администратору.",
+                        reply_markup=None
+                    )
+                    await query.answer("Ошибка при изменении статуса")
+                return
+            
+            else:
+                # Неизвестный формат ответа
+                await query.message.edit_text(
+                    f"Неизвестный формат ответа от сервера для задачи #{task_id}.\n"
+                    f"Тип ответа: {type(response)}\n\n"
+                    f"Обратитесь к администратору.",
+                    reply_markup=None
+                )
+                await query.answer("Ошибка формата ответа")
+                
+        except Exception as e:
+            logger.error(f"Error changing task status: {e}", exc_info=True)
+            await query.message.edit_text(
+                f"Произошла ошибка при изменении статуса:\n"
+                f"{str(e)}\n\n"
+                f"Попробуйте еще раз позже.",
+                reply_markup=None
+            )
+            await query.answer("Произошла ошибка")
+
+async def handle_cancel_status_change_callback(query: types.CallbackQuery):
+    """
+    Handler for cancel status change callback.
+    
+    @param query: CallbackQuery object
+    """
+    data = query.data.split(":")
+    if len(data) == 2 and data[0] == "cancel_status_change":
+        task_id = data[1]
+        await query.message.edit_text(
+            f"Изменение статуса задачи #{task_id} отменено.\n\n"
+            f"Возвращайтесь в главное меню.",
+            reply_markup=None
+        )
+        await query.answer("Изменение статуса отменено")
+
+
 async def cmd_analyze(message: types.Message, state: FSMContext):
     """
     Handler for AI analysis command.
@@ -404,7 +798,8 @@ async def cmd_help(message: types.Message):
         "/newtask - Создать задачу\n"
         "/analyze - AI анализ задач\n"
         "/export - Экспорт задач\n"
-        "/profile - Мой профиль\n\n"
+        "/profile - Мой профиль\n"
+        "/changestatus - Изменить статус задачи\n\n"
         "Быстрые действия:\n"
         "Используйте кнопки меню для быстрого доступа к функциям."
     )

@@ -1,1 +1,21 @@
 telegram_username,full_name,role,is_active,registered_at,last_login,email,department
+@admin_ivan,Иван Петров,admin,True,,,ivan@company.com,IT
+@manager_anna,Анна Сидорова,manager,True,,,anna@company.com,Project Management
+@developer_alex,Алексей Козлов,member,True,,,alex@company.com,Development
+@viewer_olga,Ольга Новикова,viewer,True,,,olga@company.com,Sales
+@developer_maria,Мария Семенова,member,True,,,maria@company.com,Development
+@analyst_dmitry,Дмитрий Волков,member,True,,,dmitry@company.com,Analytics
+@manager_pavel,Павел Орлов,manager,True,,,pavel@company.com,Project Management
+@hr_elena,Елена Ковалева,admin,True,,,elena@company.com,HR
+@sales_igor,Игорь Баранов,member,True,,,igor@company.com,Sales
+@viewer_tatiana,Татьяна Морозова,viewer,True,,,tatiana@company.com,Marketing
+@devops_sergey,Сергей Павлов,member,True,,,sergey@company.com,DevOps
+@qa_ekaterina,Екатерина Федорова,member,True,,,ekaterina@company.com,QA
+@designer_nikolay,Николай Соколов,member,True,,,nikolay@company.com,Design
+@support_andrey,Андрей Лебедев,member,True,,,andrey@company.com,Support
+@finance_svetlana,Светлана Зайцева,viewer,True,,,svetlana@company.com,Finance
+@pm_roman,Роман Егоров,manager,True,,,roman@company.com,Product Management
+@marketing_irina,Ирина Степанова,member,True,,,irina@company.com,Marketing
+@data_mikhail,Михаил Попов,member,True,,,mikhail@company.com,Data Science
+@inactive_vladimir,Владимир Васильев,viewer,False,,,vladimir@company.com,Sales
+@kulikova_alyona,Алена Куликова,admin,True,,2025-12-18 10:25:48,alyona@company.com,Administration
