@@ -159,13 +159,29 @@ def create_user():
 def export_tasks_csv():
     return export_api.export_tasks_csv_endpoint()
 
+import json
+import os
+from datetime import datetime
+
 # LLM routes
 @app.route('/api/llm/analyze/tasks', methods=['POST'])
 # @require_permission('can_use_llm', auth_manager)
 # @validate_request(LLMAnalysisRequest)
 def analyze_tasks_llm():
-    return llm_api.analyze_tasks_llm_endpoint()
-
+    result = llm_api.analyze_tasks_llm_endpoint()
+    save_path = os.path.join("saved_data", f"last_quarter_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.json")
+    os.makedirs("saved_data", exist_ok=True)
+    try:
+        if hasattr(result, 'json'):
+            data_to_save = result.json
+        else:
+            data_to_save = result
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(data_to_save, f, indent=2, ensure_ascii=False, default=str)
+    except Exception as e:
+        logger.error(f"failed save report: {e}")
+    
+    return result
 # Health check
 @app.route('/api/health', methods=['GET'])
 def health_check():

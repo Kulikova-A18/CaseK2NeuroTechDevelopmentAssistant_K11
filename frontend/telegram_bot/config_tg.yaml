@@ -155,7 +155,7 @@ cron_performance:
 #   ${TELEGRAM_BOT_TOKEN:}
 #   ${OPENAI_API_KEY:}
 #   ${LLM_ENABLED:false}
-#   ${REDIS_URL:redis://localhost:6379/0}
+#   ${REDIS_URL:redis://backend:6379/0}
 #   ${EMAIL_SMTP_SERVER:smtp.gmail.com}
 #   ${EMAIL_PORT:587}
 environment:

@@ -61,3 +61,8 @@ task_id,title,description,status,assignee,creator,created_at,updated_at,due_date
 213,ыва,ыва,todo,,@kulikova_alyona,,,,,medium,
 214,тесетест,пропустить,todo,,@kulikova_alyona,,,,,medium,
 215,ВФВФФВ,пропустить,todo,,@kulikova_alyona,,,,,medium,
+216,тест,пропустить,todo,,@kulikova_alyona,,,,,medium,
+217,тест еще,пропустить,in_progress,,@kulikova_alyona,,2025-12-19 06:14:10,,,medium,
+218,вфвфвф,ывываыва,todo,,@kulikova_alyona,,,,,medium,
+219,Да,Да,todo,,@kulikova_alyona,,,,,medium,
+220,Тарков,Окурок,todo,,@nikoll_80,,,,,medium,

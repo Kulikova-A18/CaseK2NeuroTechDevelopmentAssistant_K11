@@ -4,7 +4,7 @@
 security:
   enabled: false
   validation_method: telegram_username
-  session_timeout_hours: 1
+  session_timeout_hours: 24
   refresh_token_days: 7
   admin_only_endpoints:
     - /api/users

@@ -189,7 +189,7 @@ server:
   request_timeout: 30
   cors_origins:
     - "https://kanban.example.com"
-    - "http://localhost:3000"
+    - "http://backend:3000"
   debug: false
 ```
 
