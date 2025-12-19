@@ -23,7 +23,7 @@ services:
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://backend:5000
+      - REACT_APP_API_URL=http://193.233.171.205:5000
     restart: unless-stopped
     networks:
       - app-network
@@ -37,7 +37,7 @@ services:
     volumes:
       - ./frontend/telegram_bot/config_tg.yaml:/app/config_tg.yaml
     environment:
-      - BACKEND_URL=http://backend:5000
+      - BACKEND_URL=http://193.233.171.205:5000
     restart: unless-stopped
     networks:
       - app-network

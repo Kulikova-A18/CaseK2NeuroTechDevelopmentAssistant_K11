@@ -15,7 +15,7 @@ class BotConfig:
     BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8521671675:AAGHlyyyx59TWb3RBVD-l6hAlnP0kHg03lU')
 
     # URL API сервера
-    API_BASE_URL = os.getenv('API_BASE_URL', 'http://backend:5000')
+    API_BASE_URL = os.getenv('API_BASE_URL', 'http://193.233.171.205:5000')
 
     # Настройки логирования
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

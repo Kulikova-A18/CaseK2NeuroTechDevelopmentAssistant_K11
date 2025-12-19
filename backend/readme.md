@@ -75,15 +75,15 @@ python app.py
 4. **Протестируйте API:**
 ```bash
 # Проверка здоровья
-curl http://backend:5000/api/health
+curl http://193.233.171.205:5000/api/health
 
 # Аутентификация
-curl -X POST http://backend:5000/api/telegram/auth \
+curl -X POST http://193.233.171.205:5000/api/telegram/auth \
   -H "Content-Type: application/json" \
   -d '{"telegram_username": "@developer_alex"}'
 
 # Получение задач (используйте токен из предыдущего запроса)
-curl -X GET http://backend:5000/api/tasks \
+curl -X GET http://193.233.171.205:5000/api/tasks \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
