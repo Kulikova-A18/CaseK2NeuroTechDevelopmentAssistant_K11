@@ -72,7 +72,7 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-
+#.env
 
 .travis/README.md
 .travis/scripts

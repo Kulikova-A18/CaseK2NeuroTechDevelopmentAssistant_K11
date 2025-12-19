@@ -240,7 +240,7 @@ jobs:
       - name: Run E2E tests
         if: steps.check-e2e.outputs.e2e-tests == 'true'
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          DATABASE_URL: postgresql://postgres:postgres@backend:5432/test_db
           TESTING: "true"
         run: |
           echo "Starting E2E tests..."
