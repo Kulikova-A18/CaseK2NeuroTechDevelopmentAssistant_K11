@@ -18,4 +18,5 @@ telegram_username,full_name,role,is_active,registered_at,last_login,email,depart
 @marketing_irina,Ирина Степанова,member,True,,,irina@company.com,Marketing
 @data_mikhail,Михаил Попов,member,True,,,mikhail@company.com,Data Science
 @inactive_vladimir,Владимир Васильев,viewer,False,,,vladimir@company.com,Sales
-@kulikova_alyona,Алена Куликова,admin,True,,2025-12-18 12:56:40,alyona@company.com,Administration
+@kulikova_alyona,Алена Куликова,admin,True,,2025-12-19 06:25:01,alyona@company.com,Administration
+@nikoll_80,Вероника Механикова,member,True,,2025-12-19 06:23:55,,

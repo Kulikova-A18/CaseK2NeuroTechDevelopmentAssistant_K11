@@ -94,8 +94,8 @@ sudo docker run telegram-bot-app
 
 ## Доступ к сервисам
 
-- **Frontend (React)**: http://localhost:3000
-- **Backend (Flask API)**: http://193.233.171.205:5000
+- **Frontend (React)**: http://backend:3000
+- **Backend (Flask API)**: http://backend:5000
 - **Telegram Bot**: Работает в фоновом режиме
 
 ## Полезные команды
@@ -130,10 +130,10 @@ docker-compose logs -f telegram-bot
 ### Отладка
 ```bash
 # Проверка работоспособности бэкенда
-curl http://193.233.171.205:5000
+curl http://backend:5000
 
 # Проверка фронтенда
-curl http://localhost:3000
+curl http://backend:3000
 
 # Проверка healthcheck
 docker-compose ps
